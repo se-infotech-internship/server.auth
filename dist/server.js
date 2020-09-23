@@ -24,12 +24,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const koa_1 = __importDefault(require("koa"));
 const koa_json_1 = __importDefault(require("koa-json"));
+const koa_bodyparser_1 = __importDefault(require("koa-bodyparser"));
 const dotenv = __importStar(require("dotenv"));
 const db_1 = __importDefault(require("./util/db"));
 const user_1 = __importDefault(require("./routes/user"));
 const app = new koa_1.default();
 dotenv.config();
 const port = process.env.PORT || 5001;
+app.use(koa_bodyparser_1.default());
 app.use(koa_json_1.default());
 app.use(user_1.default.routes());
 db_1.default
@@ -38,4 +40,4 @@ db_1.default
     console.log('Database connected');
     app.listen(port, () => console.log(`Server is running on port ${port}`));
 })
-    .catch(err => console.log(err));
+    .catch((err) => console.log(err));
