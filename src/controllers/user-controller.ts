@@ -11,7 +11,6 @@ dotenv.config();
 export const getAllUsers = async (ctx: Context) => {
   try {
     const users = await User.findAll();
-    // console.log(users);
     if (!users || users.length === 0) {
       ctx.response.body = {
         message: 'No users found',
