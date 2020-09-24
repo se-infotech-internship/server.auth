@@ -8,18 +8,13 @@ const user_controller_1 = require("../controllers/user-controller");
 // Middlewares
 const middlewares_1 = require("../util/middlewares");
 const router = new koa_router_1.default();
-// ------------- Test -----------------------
-// test
-router.get('/', async (ctx) => {
-    ctx.body = { message: 'Test' };
-    ctx.response.status = 200;
-    ctx.response.body = { message: 'Test1' };
-});
 // ------------- Admin -----------------------
 // get all users
 router.get('/api/admin/users', middlewares_1.hasToken, middlewares_1.ensureAuthenticated, middlewares_1.isBlocked, middlewares_1.isAdmin, user_controller_1.getAllUsers);
 // Block/Unblock user
 router.get('/api/admin/user/block/:id', middlewares_1.hasToken, middlewares_1.ensureAuthenticated, middlewares_1.isBlocked, middlewares_1.isAdmin, user_controller_1.blockUser);
+// Delete user
+router.delete('/api/admin/user/delete/:id', middlewares_1.hasToken, middlewares_1.ensureAuthenticated, middlewares_1.isBlocked, middlewares_1.isAdmin, user_controller_1.deleteUser);
 // ------------- User/Admin -----------------------
 // register user
 router.post('/api/user/register/', user_controller_1.registerNewUser);
@@ -27,4 +22,6 @@ router.post('/api/user/register/', user_controller_1.registerNewUser);
 router.post('/api/user/login/', user_controller_1.userLogIn);
 // logOut user
 router.get('/api/user/logout/', middlewares_1.hasToken, middlewares_1.ensureAuthenticated, user_controller_1.userlogOut);
+// Add user details
+router.post('/api/user/edit/', middlewares_1.hasToken, middlewares_1.ensureAuthenticated, middlewares_1.isBlocked, user_controller_1.editUserDetails);
 module.exports = router;

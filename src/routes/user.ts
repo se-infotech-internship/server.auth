@@ -8,6 +8,8 @@ import {
   userLogIn,
   userlogOut,
   blockUser,
+  deleteUser,
+  editUserDetails,
 } from '../controllers/user-controller';
 
 // Middlewares
@@ -20,13 +22,6 @@ import {
 } from '../util/middlewares';
 
 const router = new Router();
-// ------------- Test -----------------------
-// test
-router.get('/', async (ctx: Context) => {
-  ctx.body = { message: 'Test' };
-  ctx.response.status = 200;
-  ctx.response.body = { message: 'Test1' };
-});
 
 // ------------- Admin -----------------------
 // get all users
@@ -49,6 +44,16 @@ router.get(
   blockUser,
 );
 
+// Delete user
+router.delete(
+  '/api/admin/user/delete/:id',
+  hasToken,
+  ensureAuthenticated,
+  isBlocked,
+  isAdmin,
+  deleteUser,
+);
+
 // ------------- User/Admin -----------------------
 // register user
 router.post('/api/user/register/', registerNewUser);
@@ -62,6 +67,15 @@ router.get(
   hasToken,
   ensureAuthenticated,
   userlogOut,
+);
+
+// Add user details
+router.post(
+  '/api/user/edit/',
+  hasToken,
+  ensureAuthenticated,
+  isBlocked,
+  editUserDetails,
 );
 
 export = router;

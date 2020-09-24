@@ -22,7 +22,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.blockUser = exports.userlogOut = exports.userLogIn = exports.registerNewUser = exports.getAllUsers = void 0;
+exports.editUserDetails = exports.deleteUser = exports.blockUser = exports.userlogOut = exports.userLogIn = exports.registerNewUser = exports.getAllUsers = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const user_model_1 = require("../models/user.model");
@@ -35,18 +35,18 @@ exports.getAllUsers = async (ctx) => {
         user_model_1.User.sync();
         const users = await user_model_1.User.findAll();
         if (!users || users.length === 0) {
-            ctx.response.body = {
+            ctx.body = {
                 message: 'No users found',
             };
             return;
         }
-        ctx.response.status = 200;
-        ctx.response.body = users;
+        ctx.status = 200;
+        ctx.body = users;
     }
     catch (err) {
         console.log(err);
-        ctx.response.status = err.statusCode || err.status || 400;
-        ctx.response.body = {
+        ctx.status = err.statusCode || err.status || 400;
+        ctx.body = {
             message: 'Users fetch failed',
             err: err,
         };
@@ -65,7 +65,7 @@ exports.registerNewUser = async (ctx) => {
         });
         console.log(emailExist);
         if (emailExist) {
-            ctx.response.status = 400;
+            ctx.status = 400;
             ctx.body = { message: 'Email is already exists' };
             return;
         }
@@ -79,13 +79,13 @@ exports.registerNewUser = async (ctx) => {
             password: hashPassword,
             isAdmin: isAdmin,
         });
-        ctx.response.status = 201;
-        ctx.response.body = newUser;
+        ctx.status = 201;
+        ctx.body = newUser;
     }
     catch (err) {
         console.log(err);
-        ctx.response.status = err.statusCode || err.status || 400;
-        ctx.response.body = {
+        ctx.status = err.statusCode || err.status || 400;
+        ctx.body = {
             message: 'Registration failed',
             err: err,
         };
@@ -100,14 +100,14 @@ exports.userLogIn = async (ctx) => {
             },
         });
         if (!user) {
-            ctx.response.status = 401;
+            ctx.status = 401;
             ctx.body = { message: 'Wrong credentials, try again' };
             return;
         }
         if (user.blocked) {
             console.log('Sorry, user is blocked');
-            ctx.response.status = 400;
-            ctx.response.body = {
+            ctx.status = 400;
+            ctx.body = {
                 message: 'Sorry, user is blocked',
             };
             return;
@@ -122,24 +122,24 @@ exports.userLogIn = async (ctx) => {
             });
             user.isloggedIn = true;
             await user.save();
-            ctx.response.status = 200;
-            ctx.response.body = {
+            ctx.status = 200;
+            ctx.body = {
                 id: user.id,
                 token: token,
             };
         }
         else {
             console.log('Wrong credentials, try again...');
-            ctx.response.status = 401;
-            ctx.response.body = {
+            ctx.status = 401;
+            ctx.body = {
                 message: 'Wrong credentials, try again...',
             };
         }
     }
     catch (err) {
         console.log(err);
-        ctx.response.status = err.statusCode || err.status || 400;
-        ctx.response.body = {
+        ctx.status = err.statusCode || err.status || 400;
+        ctx.body = {
             message: 'Registration failed',
             err: err,
         };
@@ -151,25 +151,91 @@ exports.userlogOut = async (ctx) => {
         const user = ctx.state.user;
         user.isloggedIn = false;
         await user.save();
-        ctx.response.status = 200;
-        ctx.response.body = { message: 'Logged Out' };
+        ctx.status = 200;
+        ctx.body = { message: 'Logged Out' };
     }
     catch (err) {
         console.log(err);
+        ctx.status = err.statusCode || err.status || 400;
+        ctx.body = {
+            message: 'log out failed',
+            err: err,
+        };
     }
 };
 // Block/Unblock User
 exports.blockUser = async (ctx) => {
-    const user = (await user_model_1.User.findByPk(ctx.params.id));
-    if (user.blocked) {
-        user.blocked = false;
-        ctx.response.status = 200;
-        ctx.response.body = { message: `Unblocked user: ${user.id}` };
+    try {
+        const user = (await user_model_1.User.findByPk(ctx.params.id));
+        if (user.blocked) {
+            user.blocked = false;
+            ctx.status = 200;
+            ctx.body = { message: `Unblocked user: ${user.id}` };
+        }
+        else {
+            user.blocked = true;
+            ctx.status = 200;
+            ctx.body = { message: `Blocked user: ${user.id}` };
+        }
+        await user.save();
     }
-    else {
-        user.blocked = true;
-        ctx.response.status = 200;
-        ctx.response.body = { message: `Blocked user: ${user.id}` };
+    catch (err) {
+        console.log(err);
+        ctx.status = err.statusCode || err.status || 400;
+        ctx.body = {
+            message: 'Block/unblock user failed',
+            err: err,
+        };
     }
-    await user.save();
+};
+// Delete user
+exports.deleteUser = async (ctx) => {
+    try {
+        await user_model_1.User.destroy({
+            where: {
+                id: ctx.params.id,
+            },
+        });
+        ctx.status = 200;
+        ctx.body = { message: `Deleted user: ${ctx.params.id}` };
+    }
+    catch (err) {
+        console.log(err);
+        ctx.status = err.statusCode || err.status || 400;
+        ctx.body = {
+            message: 'Delete user failed',
+            err: err,
+        };
+    }
+};
+// Add user details
+exports.editUserDetails = async (ctx) => {
+    try {
+        const user = ctx.state.user;
+        user.name =
+            'name' in ctx.request.body ? ctx.request.body.name : null;
+        user.TZNumber =
+            'TZNumber' in ctx.request.body
+                ? ctx.request.body.TZNumber
+                : null;
+        user.TZLicence =
+            'TZLicence' in ctx.request.body
+                ? ctx.request.body.TZLicence
+                : null;
+        user.driverLicence =
+            'driverLicence' in ctx.request.body
+                ? ctx.request.body.driverLicence
+                : null;
+        await user.save();
+        ctx.status = 200;
+        ctx.body = { message: 'Updated' };
+    }
+    catch (err) {
+        console.log(err);
+        ctx.status = err.statusCode || err.status || 400;
+        ctx.body = {
+            message: 'Edit user details failed',
+            err: err,
+        };
+    }
 };

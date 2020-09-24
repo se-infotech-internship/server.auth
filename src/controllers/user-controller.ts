@@ -14,17 +14,17 @@ export const getAllUsers = async (ctx: Context) => {
     User.sync();
     const users = await User.findAll();
     if (!users || users.length === 0) {
-      ctx.response.body = {
+      ctx.body = {
         message: 'No users found',
       };
       return;
     }
-    ctx.response.status = 200;
-    ctx.response.body = users;
+    ctx.status = 200;
+    ctx.body = users;
   } catch (err) {
     console.log(err);
-    ctx.response.status = err.statusCode || err.status || 400;
-    ctx.response.body = {
+    ctx.status = err.statusCode || err.status || 400;
+    ctx.body = {
       message: 'Users fetch failed',
       err: err,
     };
@@ -44,7 +44,7 @@ export const registerNewUser = async (ctx: Context) => {
     });
     console.log(emailExist);
     if (emailExist) {
-      ctx.response.status = 400;
+      ctx.status = 400;
       ctx.body = { message: 'Email is already exists' };
       return;
     }
@@ -60,12 +60,12 @@ export const registerNewUser = async (ctx: Context) => {
       password: hashPassword,
       isAdmin: isAdmin,
     });
-    ctx.response.status = 201;
-    ctx.response.body = newUser;
+    ctx.status = 201;
+    ctx.body = newUser;
   } catch (err) {
     console.log(err);
-    ctx.response.status = err.statusCode || err.status || 400;
-    ctx.response.body = {
+    ctx.status = err.statusCode || err.status || 400;
+    ctx.body = {
       message: 'Registration failed',
       err: err,
     };
@@ -81,14 +81,14 @@ export const userLogIn = async (ctx: Context) => {
       },
     });
     if (!user) {
-      ctx.response.status = 401;
+      ctx.status = 401;
       ctx.body = { message: 'Wrong credentials, try again' };
       return;
     }
     if (user.blocked) {
       console.log('Sorry, user is blocked');
-      ctx.response.status = 400;
-      ctx.response.body = {
+      ctx.status = 400;
+      ctx.body = {
         message: 'Sorry, user is blocked',
       };
       return;
@@ -106,22 +106,22 @@ export const userLogIn = async (ctx: Context) => {
       });
       user.isloggedIn = true;
       await user.save();
-      ctx.response.status = 200;
-      ctx.response.body = {
+      ctx.status = 200;
+      ctx.body = {
         id: user.id,
         token: token,
       };
     } else {
       console.log('Wrong credentials, try again...');
-      ctx.response.status = 401;
-      ctx.response.body = {
+      ctx.status = 401;
+      ctx.body = {
         message: 'Wrong credentials, try again...',
       };
     }
   } catch (err) {
     console.log(err);
-    ctx.response.status = err.statusCode || err.status || 400;
-    ctx.response.body = {
+    ctx.status = err.statusCode || err.status || 400;
+    ctx.body = {
       message: 'Registration failed',
       err: err,
     };
@@ -134,24 +134,91 @@ export const userlogOut = async (ctx: Context) => {
     const user = ctx.state.user as UserInterface;
     user.isloggedIn = false;
     await user.save();
-    ctx.response.status = 200;
-    ctx.response.body = { message: 'Logged Out' };
+    ctx.status = 200;
+    ctx.body = { message: 'Logged Out' };
   } catch (err) {
     console.log(err);
+    ctx.status = err.statusCode || err.status || 400;
+    ctx.body = {
+      message: 'log out failed',
+      err: err,
+    };
   }
 };
 
 // Block/Unblock User
 export const blockUser = async (ctx: Context) => {
-  const user = (await User.findByPk(ctx.params.id)) as UserInterface;
-  if (user.blocked) {
-    user.blocked = false;
-    ctx.response.status = 200;
-    ctx.response.body = { message: `Unblocked user: ${user.id}` };
-  } else {
-    user.blocked = true;
-    ctx.response.status = 200;
-    ctx.response.body = { message: `Blocked user: ${user.id}` };
+  try {
+    const user = (await User.findByPk(
+      ctx.params.id,
+    )) as UserInterface;
+    if (user.blocked) {
+      user.blocked = false;
+      ctx.status = 200;
+      ctx.body = { message: `Unblocked user: ${user.id}` };
+    } else {
+      user.blocked = true;
+      ctx.status = 200;
+      ctx.body = { message: `Blocked user: ${user.id}` };
+    }
+    await user.save();
+  } catch (err) {
+    console.log(err);
+    ctx.status = err.statusCode || err.status || 400;
+    ctx.body = {
+      message: 'Block/unblock user failed',
+      err: err,
+    };
   }
-  await user.save();
+};
+
+// Delete user
+export const deleteUser = async (ctx: Context) => {
+  try {
+    await User.destroy({
+      where: {
+        id: ctx.params.id,
+      },
+    });
+    ctx.status = 200;
+    ctx.body = { message: `Deleted user: ${ctx.params.id}` };
+  } catch (err) {
+    console.log(err);
+    ctx.status = err.statusCode || err.status || 400;
+    ctx.body = {
+      message: 'Delete user failed',
+      err: err,
+    };
+  }
+};
+
+// Add user details
+export const editUserDetails = async (ctx: Context) => {
+  try {
+    const user = ctx.state.user as UserInterface;
+    user.name =
+      'name' in ctx.request.body ? ctx.request.body.name : null;
+    user.TZNumber =
+      'TZNumber' in ctx.request.body
+        ? ctx.request.body.TZNumber
+        : null;
+    user.TZLicence =
+      'TZLicence' in ctx.request.body
+        ? ctx.request.body.TZLicence
+        : null;
+    user.driverLicence =
+      'driverLicence' in ctx.request.body
+        ? ctx.request.body.driverLicence
+        : null;
+    await user.save();
+    ctx.status = 200;
+    ctx.body = { message: 'Updated' };
+  } catch (err) {
+    console.log(err);
+    ctx.status = err.statusCode || err.status || 400;
+    ctx.body = {
+      message: 'Edit user details failed',
+      err: err,
+    };
+  }
 };
