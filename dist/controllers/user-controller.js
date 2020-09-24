@@ -22,7 +22,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userlogOut = exports.userLogIn = exports.registerNewUser = exports.getAllUsers = void 0;
+exports.blockUser = exports.userlogOut = exports.userLogIn = exports.registerNewUser = exports.getAllUsers = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const user_model_1 = require("../models/user.model");
@@ -32,6 +32,7 @@ dotenv.config();
 // Get all users
 exports.getAllUsers = async (ctx) => {
     try {
+        user_model_1.User.sync();
         const users = await user_model_1.User.findAll();
         if (!users || users.length === 0) {
             ctx.response.body = {
@@ -44,7 +45,7 @@ exports.getAllUsers = async (ctx) => {
     }
     catch (err) {
         console.log(err);
-        ctx.response.status = 400;
+        ctx.response.status = err.statusCode || err.status || 400;
         ctx.response.body = {
             message: 'Users fetch failed',
             err: err,
@@ -78,12 +79,12 @@ exports.registerNewUser = async (ctx) => {
             password: hashPassword,
             isAdmin: isAdmin,
         });
-        ctx.response.status = 200;
+        ctx.response.status = 201;
         ctx.response.body = newUser;
     }
     catch (err) {
         console.log(err);
-        ctx.response.status = 400;
+        ctx.response.status = err.statusCode || err.status || 400;
         ctx.response.body = {
             message: 'Registration failed',
             err: err,
@@ -97,50 +98,47 @@ exports.userLogIn = async (ctx) => {
             where: {
                 email: ctx.request.body.email,
             },
-            raw: true,
         });
         if (!user) {
-            ctx.response.status = 400;
+            ctx.response.status = 401;
             ctx.body = { message: 'Wrong credentials, try again' };
             return;
         }
-        else {
-            // Match password
-            await bcrypt_1.default.compare(ctx.request.body.password, user.password, (err, isMatch) => {
-                if (err) {
-                    console.log(err);
-                    ctx.response.status = 400;
-                    ctx.response.body = {
-                        message: 'Password compare failed',
-                        err: err,
-                    };
-                    return;
-                }
-                if (isMatch) {
-                    user.isloggedIn = true;
-                    const token = jsonwebtoken_1.default.sign({ Id: user.id }, 'fsdgsdgsgdsg', {
-                        expiresIn: '3h',
-                    });
-                    user.save();
-                    ctx.response.status = 200;
-                    ctx.response.body = {
-                        id: user.id,
-                        token: token,
-                    };
-                }
-                else {
-                    console.log('Wrong credentials, try again...');
-                    ctx.response.status = 401;
-                    ctx.response.body = {
-                        message: 'Wrong credentials, try again...',
-                    };
-                }
+        if (user.blocked) {
+            console.log('Sorry, user is blocked');
+            ctx.response.status = 400;
+            ctx.response.body = {
+                message: 'Sorry, user is blocked',
+            };
+            return;
+        }
+        // Match password
+        const isMatch = bcrypt_1.default.compareSync(ctx.request.body.password, user.password);
+        const tokenSecret = process.env.TOKEN_SECRET;
+        const tokenLife = process.env.TOKEN_LIFE;
+        if (isMatch) {
+            const token = jsonwebtoken_1.default.sign({ Id: user.id }, tokenSecret, {
+                expiresIn: tokenLife,
             });
+            user.isloggedIn = true;
+            await user.save();
+            ctx.response.status = 200;
+            ctx.response.body = {
+                id: user.id,
+                token: token,
+            };
+        }
+        else {
+            console.log('Wrong credentials, try again...');
+            ctx.response.status = 401;
+            ctx.response.body = {
+                message: 'Wrong credentials, try again...',
+            };
         }
     }
     catch (err) {
         console.log(err);
-        ctx.response.status = 400;
+        ctx.response.status = err.statusCode || err.status || 400;
         ctx.response.body = {
             message: 'Registration failed',
             err: err,
@@ -148,11 +146,30 @@ exports.userLogIn = async (ctx) => {
     }
 };
 // Logout
-exports.userlogOut = async () => {
+exports.userlogOut = async (ctx) => {
     try {
-        // logOut user...
+        const user = ctx.state.user;
+        user.isloggedIn = false;
+        await user.save();
+        ctx.response.status = 200;
+        ctx.response.body = { message: 'Logged Out' };
     }
     catch (err) {
         console.log(err);
     }
+};
+// Block/Unblock User
+exports.blockUser = async (ctx) => {
+    const user = (await user_model_1.User.findByPk(ctx.params.id));
+    if (user.blocked) {
+        user.blocked = false;
+        ctx.response.status = 200;
+        ctx.response.body = { message: `Unblocked user: ${user.id}` };
+    }
+    else {
+        user.blocked = true;
+        ctx.response.status = 200;
+        ctx.response.body = { message: `Blocked user: ${user.id}` };
+    }
+    await user.save();
 };

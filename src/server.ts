@@ -15,6 +15,17 @@ app.use(bodyParser());
 app.use(json());
 app.use(userRouter.routes());
 
+// Error handler
+app.use(async (ctx, next) => {
+  try {
+    await next();
+  } catch (err) {
+    ctx.status = err.statusCode || err.status || 500;
+    ctx.body = { code: err.statusCode, message: err.message };
+    ctx.app.emit('error', err, ctx);
+  }
+});
+
 sequelize
   .sync()
   .then(() => {

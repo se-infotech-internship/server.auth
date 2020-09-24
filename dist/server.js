@@ -34,6 +34,17 @@ const port = process.env.PORT || 5001;
 app.use(koa_bodyparser_1.default());
 app.use(koa_json_1.default());
 app.use(user_1.default.routes());
+// Error handler
+app.use(async (ctx, next) => {
+    try {
+        await next();
+    }
+    catch (err) {
+        ctx.status = err.statusCode || err.status || 500;
+        ctx.body = { code: err.statusCode, message: err.message };
+        ctx.app.emit('error', err, ctx);
+    }
+});
 db_1.default
     .sync()
     .then(() => {

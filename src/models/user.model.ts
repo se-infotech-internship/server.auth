@@ -17,11 +17,11 @@ interface UserAttributes {
 interface UserCreationAttributes
   extends Sequelize.Optional<UserAttributes, 'id'> {}
 
-interface UserInsterface
+export interface UserInterface
   extends Sequelize.Model<UserAttributes, UserCreationAttributes>,
     UserAttributes {}
 
-const User = sequelize.define<UserInsterface>('user', {
+const User = sequelize.define<UserInterface>('user', {
   id: {
     type: Sequelize.STRING,
     allowNull: false,
