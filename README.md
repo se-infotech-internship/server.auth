@@ -1,1 +1,1 @@
-##INFOTECH Node.js Training Project - auth api
+## INFOTECH Node.js Training Project - auth api
