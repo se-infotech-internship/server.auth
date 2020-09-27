@@ -17,6 +17,11 @@ const User = db_1.default.define('user', {
         allowNull: false,
         unique: true,
     },
+    confirmed: {
+        type: sequelize_1.default.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
     password: {
         type: sequelize_1.default.STRING,
         allowNull: false,

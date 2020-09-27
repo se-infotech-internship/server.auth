@@ -2,7 +2,7 @@ import { Context, Next } from 'koa';
 import jwt from 'jsonwebtoken';
 import { User, UserInterface } from '../models/user.model';
 
-interface Decoded {
+export interface Decoded {
   Id: string;
   iat: number;
   exp: number;

@@ -4,6 +4,7 @@ import sequelize from '../util/db';
 interface UserAttributes {
   id: string;
   email: string;
+  confirmed?: boolean;
   password: string;
   blocked?: boolean;
   isAdmin: boolean;
@@ -31,6 +32,11 @@ const User = sequelize.define<UserInterface>('user', {
     type: Sequelize.STRING,
     allowNull: false,
     unique: true,
+  },
+  confirmed: {
+    type: Sequelize.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
   },
   password: {
     type: Sequelize.STRING,

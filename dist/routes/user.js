@@ -18,6 +18,8 @@ router.delete('/api/admin/user/delete/:id', middlewares_1.hasToken, middlewares_
 // ------------- User/Admin -----------------------
 // register user
 router.post('/api/user/register/', user_controller_1.registerNewUser);
+// confirm email
+router.get('/api/user/confirm/:token', user_controller_1.confirmEmail);
 // logIn user
 router.post('/api/user/login/', user_controller_1.userLogIn);
 // logOut user

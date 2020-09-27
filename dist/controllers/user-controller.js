@@ -22,7 +22,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.editUserDetails = exports.deleteUser = exports.blockUser = exports.userlogOut = exports.userLogIn = exports.registerNewUser = exports.getAllUsers = void 0;
+exports.editUserDetails = exports.deleteUser = exports.blockUser = exports.userlogOut = exports.userLogIn = exports.confirmEmail = exports.registerNewUser = exports.getAllUsers = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const user_model_1 = require("../models/user.model");
@@ -56,6 +56,7 @@ exports.getAllUsers = async (ctx) => {
 exports.registerNewUser = async (ctx) => {
     const { email, password } = ctx.request.body;
     const id = uuid_1.v4();
+    const isAdmin = !!ctx.request.body.isAdmin;
     try {
         // Check if User Exists in DB
         const emailExist = await user_model_1.User.findOne({
@@ -63,16 +64,17 @@ exports.registerNewUser = async (ctx) => {
                 email: email,
             },
         });
-        console.log(emailExist);
         if (emailExist) {
             ctx.status = 400;
             ctx.body = { message: 'Email is already exists' };
             return;
         }
-        const isAdmin = !!ctx.request.body.isAdmin;
         // Hash password
         const salt = await bcrypt_1.default.genSalt(10);
         const hashPassword = await bcrypt_1.default.hash(password, salt);
+        // send email tu verify user
+        //BASE_URL=http://localhost:5001/
+        // Save user to DB
         const newUser = await user_model_1.User.create({
             id: id,
             email: email,
@@ -87,6 +89,25 @@ exports.registerNewUser = async (ctx) => {
         ctx.status = err.statusCode || err.status || 400;
         ctx.body = {
             message: 'Registration failed',
+            err: err,
+        };
+    }
+};
+// confirm email
+exports.confirmEmail = async (ctx) => {
+    try {
+        const tokenSecret = process.env.TOKEN_SECRET;
+        const token = ctx.params.id;
+        const decoded = await jsonwebtoken_1.default.verify(token, tokenSecret);
+        await user_model_1.User.update({ confirmed: true }, { where: { id: decoded.Id } });
+        ctx.status = 200;
+        ctx.body = { message: 'Email confirmation failed' };
+    }
+    catch (err) {
+        console.log(err);
+        ctx.status = err.statusCode || err.status || 400;
+        ctx.body = {
+            message: 'Email confirmation failed',
             err: err,
         };
     }
@@ -109,6 +130,14 @@ exports.userLogIn = async (ctx) => {
             ctx.status = 400;
             ctx.body = {
                 message: 'Sorry, user is blocked',
+            };
+            return;
+        }
+        if (!user.confirmed) {
+            console.log('Please, confirm your email to log in');
+            ctx.status = 400;
+            ctx.body = {
+                message: 'Please, confirm your email to log in',
             };
             return;
         }

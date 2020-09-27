@@ -1,8 +1,10 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import nodemailer from 'nodemailer';
 import { Context } from 'koa';
 import { User } from '../models/user.model';
 import { UserInterface } from '../models/user.model';
+import { Decoded } from '../util/middlewares';
 import { v4 as uuidv4 } from 'uuid';
 import * as dotenv from 'dotenv';
 
@@ -35,6 +37,7 @@ export const getAllUsers = async (ctx: Context) => {
 export const registerNewUser = async (ctx: Context) => {
   const { email, password } = ctx.request.body;
   const id = uuidv4();
+  const isAdmin = !!ctx.request.body.isAdmin;
   try {
     // Check if User Exists in DB
     const emailExist = await User.findOne({
@@ -42,18 +45,23 @@ export const registerNewUser = async (ctx: Context) => {
         email: email,
       },
     });
-    console.log(emailExist);
     if (emailExist) {
       ctx.status = 400;
       ctx.body = { message: 'Email is already exists' };
       return;
     }
 
-    const isAdmin = !!ctx.request.body.isAdmin;
-
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(password, salt);
+
+    // send email tu verify user
+    // BASE_URL=http://localhost:5001/
+    const transporter = nodemailer.createTransport({
+      
+    })
+
+    // Save user to DB
     const newUser = await User.create({
       id: id,
       email: email,
@@ -71,6 +79,26 @@ export const registerNewUser = async (ctx: Context) => {
     };
   }
 };
+
+// confirm email
+export const confirmEmail = async (ctx: Context) => { 
+  try {
+    const tokenSecret = process.env.TOKEN_SECRET as string;
+    const token = ctx.params.id as string;
+    const decoded = await jwt.verify(token, tokenSecret) as Decoded;
+    await User.update({confirmed: true}, {where: {id: decoded.Id}})
+    ctx.status = 200;
+    ctx.body = { message: 'Email confirmation failed' };
+  }
+  catch(err) {
+    console.log(err);
+    ctx.status = err.statusCode || err.status || 400;
+    ctx.body = {
+      message: 'Email confirmation failed',
+      err: err,
+    };
+  }
+}
 
 // Login
 export const userLogIn = async (ctx: Context) => {
@@ -90,6 +118,14 @@ export const userLogIn = async (ctx: Context) => {
       ctx.status = 400;
       ctx.body = {
         message: 'Sorry, user is blocked',
+      };
+      return;
+    }
+    if (!user.confirmed) {
+      console.log('Please, confirm your email to log in');
+      ctx.status = 400;
+      ctx.body = {
+        message: 'Please, confirm your email to log in',
       };
       return;
     }

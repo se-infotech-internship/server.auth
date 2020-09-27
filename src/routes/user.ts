@@ -10,6 +10,7 @@ import {
   blockUser,
   deleteUser,
   editUserDetails,
+  confirmEmail,
 } from '../controllers/user-controller';
 
 // Middlewares
@@ -57,6 +58,9 @@ router.delete(
 // ------------- User/Admin -----------------------
 // register user
 router.post('/api/user/register/', registerNewUser);
+
+// confirm email
+router.get('/api/user/confirm/:token', confirmEmail);
 
 // logIn user
 router.post('/api/user/login/', userLogIn);
