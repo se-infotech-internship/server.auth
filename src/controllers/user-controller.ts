@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import nodemailer from 'nodemailer';
+// import nodemailer from 'nodemailer';
+// import { google } from 'googleapis';
 import { Context } from 'koa';
 import { User } from '../models/user.model';
 import { UserInterface } from '../models/user.model';
@@ -9,6 +10,41 @@ import { v4 as uuidv4 } from 'uuid';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
+
+// Google API setup
+// const OAuth2 = google.auth.OAuth2;
+// const clientId = process.env.GOOGLE_ID as string;
+// const clientSecret = process.env.GOOGLE_SECRET as string;
+// const redirectURL = 'https://developers.google.com/oauthplayground';
+// const refreshToken = process.env.GOOGLE_REFRESH_TOKEN as string;
+// const myOAuth2Client = new OAuth2(
+//   clientId,
+//   clientSecret,
+//   redirectURL,
+// );
+
+// myOAuth2Client.setCredentials({
+//   refresh_token: refreshToken,
+// });
+// const nodeMailUser = process.env.NODEMAILER_USER as string;
+
+// Email notifications setup
+// const emailSetup = (t: string) => {
+//   const transporter = nodemailer.createTransport({
+//     host: 'smtp.gmail.com',
+//     port: 465,
+//     secure: true,
+//     auth: {
+//       type: 'OAuth2',
+//       user: nodeMailUser,
+//       clientId: clientId,
+//       clientSecret: clientSecret,
+//       refreshToken: refreshToken,
+//       accessToken: t,
+//     },
+//   });
+//   return transporter;
+// };
 
 // Get all users
 export const getAllUsers = async (ctx: Context) => {
@@ -38,6 +74,8 @@ export const registerNewUser = async (ctx: Context) => {
   const { email, password } = ctx.request.body;
   const id = uuidv4();
   const isAdmin = !!ctx.request.body.isAdmin;
+  const rememberPassword = !!ctx.request.body.rememberPassword;
+  let refreshToken = '';
   try {
     // Check if User Exists in DB
     const emailExist = await User.findOne({
@@ -50,16 +88,15 @@ export const registerNewUser = async (ctx: Context) => {
       ctx.body = { message: 'Email is already exists' };
       return;
     }
+    if (rememberPassword) {
+      refreshToken = uuidv4();
+    }
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(password, salt);
 
     // send email tu verify user
-    // BASE_URL=http://localhost:5001/
-    const transporter = nodemailer.createTransport({
-      
-    })
 
     // Save user to DB
     const newUser = await User.create({
@@ -67,6 +104,7 @@ export const registerNewUser = async (ctx: Context) => {
       email: email,
       password: hashPassword,
       isAdmin: isAdmin,
+      refreshToken: refreshToken,
     });
     ctx.status = 201;
     ctx.body = newUser;
@@ -81,16 +119,18 @@ export const registerNewUser = async (ctx: Context) => {
 };
 
 // confirm email
-export const confirmEmail = async (ctx: Context) => { 
+export const confirmEmail = async (ctx: Context) => {
   try {
     const tokenSecret = process.env.TOKEN_SECRET as string;
     const token = ctx.params.id as string;
-    const decoded = await jwt.verify(token, tokenSecret) as Decoded;
-    await User.update({confirmed: true}, {where: {id: decoded.Id}})
+    const decoded = (await jwt.verify(token, tokenSecret)) as Decoded;
+    await User.update(
+      { confirmed: true },
+      { where: { id: decoded.Id } },
+    );
     ctx.status = 200;
     ctx.body = { message: 'Email confirmation failed' };
-  }
-  catch(err) {
+  } catch (err) {
     console.log(err);
     ctx.status = err.statusCode || err.status || 400;
     ctx.body = {
@@ -98,7 +138,7 @@ export const confirmEmail = async (ctx: Context) => {
       err: err,
     };
   }
-}
+};
 
 // Login
 export const userLogIn = async (ctx: Context) => {
@@ -121,14 +161,14 @@ export const userLogIn = async (ctx: Context) => {
       };
       return;
     }
-    if (!user.confirmed) {
-      console.log('Please, confirm your email to log in');
-      ctx.status = 400;
-      ctx.body = {
-        message: 'Please, confirm your email to log in',
-      };
-      return;
-    }
+    // if (!user.confirmed) {
+    //   console.log('Please, confirm your email to log in');
+    //   ctx.status = 400;
+    //   ctx.body = {
+    //     message: 'Please, confirm your email to log in',
+    //   };
+    //   return;
+    // }
     // Match password
     const isMatch = bcrypt.compareSync(
       ctx.request.body.password,

@@ -26,6 +26,12 @@ const User = db_1.default.define('user', {
         type: sequelize_1.default.STRING,
         allowNull: false,
     },
+    rememberPassword: {
+        type: sequelize_1.default.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
+    refreshToken: sequelize_1.default.STRING,
     blocked: {
         type: sequelize_1.default.BOOLEAN,
         allowNull: false,
