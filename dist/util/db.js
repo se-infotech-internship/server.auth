@@ -23,6 +23,7 @@ const dotenv = __importStar(require("dotenv"));
 dotenv.config();
 const sequelize = new sequelize_1.Sequelize('users', 'root', process.env.DB_PASSWORD, {
     dialect: 'mariadb',
-    host: 'localhost'
+    host: 'localhost',
+    port: 3307
 });
 module.exports = sequelize;

@@ -3,8 +3,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 const koa_router_1 = __importDefault(require("koa-router"));
+// import { Context } from 'koa';
+// import passport from 'passport';
 //import controllers
 const user_controller_1 = require("../controllers/user-controller");
+const google_auth_controller_1 = require("../controllers/google-auth-controller");
 // Middlewares
 const middlewares_1 = require("../util/middlewares");
 const router = new koa_router_1.default();
@@ -26,4 +29,8 @@ router.post('/api/user/login/', user_controller_1.userLogIn);
 router.get('/api/user/logout/', middlewares_1.hasToken, middlewares_1.ensureAuthenticated, user_controller_1.userlogOut);
 // Add user details
 router.post('/api/user/edit/', middlewares_1.hasToken, middlewares_1.ensureAuthenticated, middlewares_1.isBlocked, user_controller_1.editUserDetails);
+// Google auth
+router.get('/api/user/login/google', google_auth_controller_1.googleAuth);
+//   passport.authenticate('google', { scope: ['profile'] }));
+router.get('/api/user/login/google/callback', google_auth_controller_1.googleAuthCallback);
 module.exports = router;

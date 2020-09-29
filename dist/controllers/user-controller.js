@@ -1,23 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -27,12 +8,26 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const user_model_1 = require("../models/user.model");
 const uuid_1 = require("uuid");
-const dotenv = __importStar(require("dotenv"));
-dotenv.config();
-// Google API setup
-// const OAuth2 = google.auth.OAuth2;
-// const clientId = process.env.GOOGLE_ID as string;
-// const clientSecret = process.env.GOOGLE_SECRET as string;
+// async function getGoogleUser({ code }) {
+//   const { tokens } = await OAuth2.getToken(code);
+//   OAuth2.setCredentials(tokens);
+//   // Fetch the user's profile with the access token and bearer
+//   const googleUser = await fetch
+//     (
+//       `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${tokens.access_token}`,
+//       {
+//         method: 'get',
+//         headers: {
+//           Authorization: `Bearer ${tokens.id_token}`,
+//         },
+//       },
+//     )
+//     .then(res => res.data)
+//     .catch(error => {
+//       throw new Error(error.message);
+//     });
+//   return googleUser;
+// }
 // const redirectURL = 'https://developers.google.com/oauthplayground';
 // const refreshToken = process.env.GOOGLE_REFRESH_TOKEN as string;
 // const myOAuth2Client = new OAuth2(

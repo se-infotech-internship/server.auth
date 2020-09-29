@@ -5,7 +5,8 @@ dotenv.config();
 
 const sequelize = new Sequelize('users', 'root', process.env.DB_PASSWORD, { 
     dialect: 'mariadb',
-    host: 'localhost'
+    host: 'localhost',
+    port: 3307
 });
 
 export = sequelize;

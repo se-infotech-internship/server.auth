@@ -1,20 +1,36 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-// import nodemailer from 'nodemailer';
-// import { google } from 'googleapis';
 import { Context } from 'koa';
 import { User } from '../models/user.model';
 import { UserInterface } from '../models/user.model';
 import { Decoded } from '../util/middlewares';
 import { v4 as uuidv4 } from 'uuid';
-import * as dotenv from 'dotenv';
 
-dotenv.config();
 
-// Google API setup
-// const OAuth2 = google.auth.OAuth2;
-// const clientId = process.env.GOOGLE_ID as string;
-// const clientSecret = process.env.GOOGLE_SECRET as string;
+// async function getGoogleUser({ code }) {
+//   const { tokens } = await OAuth2.getToken(code);
+
+//   OAuth2.setCredentials(tokens);
+
+//   // Fetch the user's profile with the access token and bearer
+//   const googleUser = await fetch
+//     (
+//       `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${tokens.access_token}`,
+//       {
+//         method: 'get',
+//         headers: {
+//           Authorization: `Bearer ${tokens.id_token}`,
+//         },
+//       },
+//     )
+//     .then(res => res.data)
+//     .catch(error => {
+//       throw new Error(error.message);
+//     });
+
+//   return googleUser;
+// }
+
 // const redirectURL = 'https://developers.google.com/oauthplayground';
 // const refreshToken = process.env.GOOGLE_REFRESH_TOKEN as string;
 // const myOAuth2Client = new OAuth2(

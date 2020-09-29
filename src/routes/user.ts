@@ -1,5 +1,6 @@
-import { Context } from 'koa';
 import Router from 'koa-router';
+// import { Context } from 'koa';
+// import passport from 'passport';
 
 //import controllers
 import {
@@ -12,6 +13,7 @@ import {
   editUserDetails,
   confirmEmail,
 } from '../controllers/user-controller';
+import { googleAuth, googleAuthCallback } from '../controllers/google-auth-controller'
 
 // Middlewares
 
@@ -81,5 +83,15 @@ router.post(
   isBlocked,
   editUserDetails,
 );
+
+// Google auth
+router.get('/api/user/login/google', googleAuth);
+//   passport.authenticate('google', { scope: ['profile'] }));
+
+router.get('/api/user/login/google/callback', googleAuthCallback);
+//   passport.authenticate('google', { failureRedirect: '/login' }),
+// (ctx: Context) => {
+//   ctx.redirect('/');
+// })
 
 export = router;
