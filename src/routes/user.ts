@@ -1,63 +1,25 @@
 import Router from 'koa-router';
-// import { Context } from 'koa';
-// import passport from 'passport';
+// import { Context, Next } from 'koa';
 
 //import controllers
 import {
-  getAllUsers,
   registerNewUser,
   userLogIn,
   userlogOut,
-  blockUser,
-  deleteUser,
   editUserDetails,
   confirmEmail,
 } from '../controllers/user-controller';
 import { googleAuth, googleAuthCallback } from '../controllers/google-auth-controller'
 
 // Middlewares
-
 import {
   ensureAuthenticated,
   hasToken,
   isBlocked,
-  isAdmin,
-} from '../util/middlewares';
+} from '../middlewares';
 
 const router = new Router();
 
-// ------------- Admin -----------------------
-// get all users
-router.get(
-  '/api/admin/users',
-  hasToken,
-  ensureAuthenticated,
-  isBlocked,
-  isAdmin,
-  getAllUsers,
-);
-
-// Block/Unblock user
-router.get(
-  '/api/admin/user/block/:id',
-  hasToken,
-  ensureAuthenticated,
-  isBlocked,
-  isAdmin,
-  blockUser,
-);
-
-// Delete user
-router.delete(
-  '/api/admin/user/delete/:id',
-  hasToken,
-  ensureAuthenticated,
-  isBlocked,
-  isAdmin,
-  deleteUser,
-);
-
-// ------------- User/Admin -----------------------
 // register user
 router.post('/api/user/register/', registerNewUser);
 
@@ -66,6 +28,7 @@ router.get('/api/user/confirm/:token', confirmEmail);
 
 // logIn user
 router.post('/api/user/login/', userLogIn);
+router.get('/api/user/login/');
 
 // logOut user
 router.get(
@@ -86,12 +49,6 @@ router.post(
 
 // Google auth
 router.get('/api/user/login/google', googleAuth);
-//   passport.authenticate('google', { scope: ['profile'] }));
-
 router.get('/api/user/login/google/callback', googleAuthCallback);
-//   passport.authenticate('google', { failureRedirect: '/login' }),
-// (ctx: Context) => {
-//   ctx.redirect('/');
-// })
 
 export = router;

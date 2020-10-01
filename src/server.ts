@@ -2,20 +2,21 @@ import Koa from 'koa';
 import json from 'koa-json';
 import bodyParser from 'koa-bodyparser';
 import * as dotenv from 'dotenv';
-import sequelize from './util/db';
+import sequelize from './storage/sql'
 import userRouter from './routes/user';
-import passport from 'passport';
-
-const app = new Koa();
+import adminRouter from './routes/admin';
 
 dotenv.config();
+const app = new Koa();
 
 const port = process.env.PORT || 5001;
 
+app.keys = ['keys', 'keykeys'];
 app.use(bodyParser());
 app.use(json());
-app.use(passport.initialize());
+
 app.use(userRouter.routes());
+app.use(adminRouter.routes());
 
 // Error handler
 app.use(async (ctx, next) => {

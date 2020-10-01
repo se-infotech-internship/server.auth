@@ -3,95 +3,22 @@ import jwt from 'jsonwebtoken';
 import { Context } from 'koa';
 import { User } from '../models/user.model';
 import { UserInterface } from '../models/user.model';
-import { Decoded } from '../util/middlewares';
+import { Decoded } from '../middlewares';
 import { v4 as uuidv4 } from 'uuid';
+import * as dotenv from 'dotenv';
+import { client } from '../storage/redis'
 
+dotenv.config();
 
-// async function getGoogleUser({ code }) {
-//   const { tokens } = await OAuth2.getToken(code);
-
-//   OAuth2.setCredentials(tokens);
-
-//   // Fetch the user's profile with the access token and bearer
-//   const googleUser = await fetch
-//     (
-//       `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${tokens.access_token}`,
-//       {
-//         method: 'get',
-//         headers: {
-//           Authorization: `Bearer ${tokens.id_token}`,
-//         },
-//       },
-//     )
-//     .then(res => res.data)
-//     .catch(error => {
-//       throw new Error(error.message);
-//     });
-
-//   return googleUser;
-// }
-
-// const redirectURL = 'https://developers.google.com/oauthplayground';
-// const refreshToken = process.env.GOOGLE_REFRESH_TOKEN as string;
-// const myOAuth2Client = new OAuth2(
-//   clientId,
-//   clientSecret,
-//   redirectURL,
-// );
-
-// myOAuth2Client.setCredentials({
-//   refresh_token: refreshToken,
-// });
-// const nodeMailUser = process.env.NODEMAILER_USER as string;
-
-// Email notifications setup
-// const emailSetup = (t: string) => {
-//   const transporter = nodemailer.createTransport({
-//     host: 'smtp.gmail.com',
-//     port: 465,
-//     secure: true,
-//     auth: {
-//       type: 'OAuth2',
-//       user: nodeMailUser,
-//       clientId: clientId,
-//       clientSecret: clientSecret,
-//       refreshToken: refreshToken,
-//       accessToken: t,
-//     },
-//   });
-//   return transporter;
-// };
-
-// Get all users
-export const getAllUsers = async (ctx: Context) => {
-  try {
-    User.sync();
-    const users = await User.findAll();
-    if (!users || users.length === 0) {
-      ctx.body = {
-        message: 'No users found',
-      };
-      return;
-    }
-    ctx.status = 200;
-    ctx.body = users;
-  } catch (err) {
-    console.log(err);
-    ctx.status = err.statusCode || err.status || 400;
-    ctx.body = {
-      message: 'Users fetch failed',
-      err: err,
-    };
-  }
-};
+const tokenSecret = process.env.TOKEN_SECRET as string;
+const tokenLife = process.env.TOKEN_LIFE as string;
+const redisExp = process.env.REDIS_EXP as string;
 
 // Register new user
 export const registerNewUser = async (ctx: Context) => {
   const { email, password } = ctx.request.body;
   const id = uuidv4();
   const isAdmin = !!ctx.request.body.isAdmin;
-  const rememberPassword = !!ctx.request.body.rememberPassword;
-  let refreshToken = '';
   try {
     // Check if User Exists in DB
     const emailExist = await User.findOne({
@@ -103,9 +30,6 @@ export const registerNewUser = async (ctx: Context) => {
       ctx.status = 400;
       ctx.body = { message: 'Email is already exists' };
       return;
-    }
-    if (rememberPassword) {
-      refreshToken = uuidv4();
     }
 
     // Hash password
@@ -120,7 +44,6 @@ export const registerNewUser = async (ctx: Context) => {
       email: email,
       password: hashPassword,
       isAdmin: isAdmin,
-      refreshToken: refreshToken,
     });
     ctx.status = 201;
     ctx.body = newUser;
@@ -137,7 +60,6 @@ export const registerNewUser = async (ctx: Context) => {
 // confirm email
 export const confirmEmail = async (ctx: Context) => {
   try {
-    const tokenSecret = process.env.TOKEN_SECRET as string;
     const token = ctx.params.id as string;
     const decoded = (await jwt.verify(token, tokenSecret)) as Decoded;
     await User.update(
@@ -190,18 +112,25 @@ export const userLogIn = async (ctx: Context) => {
       ctx.request.body.password,
       user.password,
     );
-    const tokenSecret = process.env.TOKEN_SECRET as string;
-    const tokenLife = process.env.TOKEN_LIFE as string;
+    
     if (isMatch) {
-      const token = jwt.sign({ Id: user.id }, tokenSecret, {
-        expiresIn: tokenLife,
+      let refreshToken = undefined;
+      if (user.rememberPassword) {
+        refreshToken = uuidv4();
+        await client.setex(refreshToken, +redisExp, user.id);
+      }
+      
+      const accessToken = jwt.sign({ Id: user.id }, tokenSecret, {
+      expiresIn: tokenLife,
       });
+      
       user.isloggedIn = true;
       await user.save();
       ctx.status = 200;
       ctx.body = {
         id: user.id,
-        token: token,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
       };
     } else {
       console.log('Wrong credentials, try again...');
@@ -220,6 +149,52 @@ export const userLogIn = async (ctx: Context) => {
   }
 };
 
+// remember password middleware
+export const rememberPassword = async (ctx: Context) => {
+  try {
+    const refreshToken = ctx.request.headers.accessToken as string;
+    if (!refreshToken) {
+      console.log('Token - Please, log in to view this resourse');
+      ctx.response.status = 401;
+      ctx.response.body = {
+        message: 'Token - Please, log in to view this resourse',
+      };
+      return;
+    }
+    await client.get(refreshToken, async (err, result)=>{
+      if (err || !result) {
+        console.log(err);
+        ctx.status = 400;
+        ctx.body = {
+        message: 'Saved password check failed',
+          err: err,
+        };
+      }
+      const id = result as string;
+      const newRefreshToken = uuidv4();
+      await client.setex(newRefreshToken, +redisExp, id);
+      const accessToken = jwt.sign({ Id: result }, tokenSecret, {
+        expiresIn: tokenLife,
+      });
+      ctx.status = 200
+      ctx.body = {
+        id: result,
+        accessToken: accessToken,
+        refreshToken: newRefreshToken,
+      };
+    })
+    
+  }
+  catch(err) {
+    console.log(err);
+    ctx.status = err.statusCode || err.status || 400;
+    ctx.body = {
+      message: 'Saved password check failed',
+      err: err,
+    };
+  }
+}
+
 // Logout
 export const userlogOut = async (ctx: Context) => {
   try {
@@ -233,52 +208,6 @@ export const userlogOut = async (ctx: Context) => {
     ctx.status = err.statusCode || err.status || 400;
     ctx.body = {
       message: 'log out failed',
-      err: err,
-    };
-  }
-};
-
-// Block/Unblock User
-export const blockUser = async (ctx: Context) => {
-  try {
-    const user = (await User.findByPk(
-      ctx.params.id,
-    )) as UserInterface;
-    if (user.blocked) {
-      user.blocked = false;
-      ctx.status = 200;
-      ctx.body = { message: `Unblocked user: ${user.id}` };
-    } else {
-      user.blocked = true;
-      ctx.status = 200;
-      ctx.body = { message: `Blocked user: ${user.id}` };
-    }
-    await user.save();
-  } catch (err) {
-    console.log(err);
-    ctx.status = err.statusCode || err.status || 400;
-    ctx.body = {
-      message: 'Block/unblock user failed',
-      err: err,
-    };
-  }
-};
-
-// Delete user
-export const deleteUser = async (ctx: Context) => {
-  try {
-    await User.destroy({
-      where: {
-        id: ctx.params.id,
-      },
-    });
-    ctx.status = 200;
-    ctx.body = { message: `Deleted user: ${ctx.params.id}` };
-  } catch (err) {
-    console.log(err);
-    ctx.status = err.statusCode || err.status || 400;
-    ctx.body = {
-      message: 'Delete user failed',
       err: err,
     };
   }

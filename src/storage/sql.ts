@@ -3,10 +3,11 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-const sequelize = new Sequelize('users', 'root', process.env.DB_PASSWORD, { 
+const passwordDb = process.env.DB_PASSWORD as string;
+const sequelize = new Sequelize('LocalDB', 'root', passwordDb, { 
     dialect: 'mariadb',
     host: 'localhost',
-    port: 3307
+    port: 3306
 });
 
 export = sequelize;
