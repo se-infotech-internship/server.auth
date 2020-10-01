@@ -1,6 +1,5 @@
 import { google } from 'googleapis';
 import { Context } from 'koa';
-// import fetch from 'node-fetch';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -18,6 +17,7 @@ async function getGoogleAuthURL() {
   const scopes = [
     'https://www.googleapis.com/auth/userinfo.profile',
     'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/plus.me'
   ];
 
   return await OAuth2.generateAuthUrl({
@@ -50,9 +50,24 @@ export const googleAuthCallback = async (ctx: Context) => {
     const OAuth2 = await getOAuthClient();
     const code = ctx.request.query.code;
   
-    await OAuth2.getToken(code, (err, tokens) =>{ 
+    await OAuth2.getToken(code, async (err, tokens) =>{ 
       if(!err && tokens) {
         OAuth2.setCredentials(tokens);
+        await google.plus('v1').people.get({
+          userId: 'me',
+          auth: OAuth2
+        },(err, res)=>{
+          if (err || !res) {
+            console.log(err);
+            ctx.status = 400;
+            ctx.body = {
+              message: 'Google sign in failed',
+              err: err,
+            };
+            return;
+          }
+          console.log(res.data);
+        })
         ctx.status = 200;
         ctx.body = {
           message: 'Logged in with Google',

@@ -5,7 +5,7 @@ import { UserInterface } from '../models/user.model';
 // Get all users
 export const getAllUsers = async (ctx: Context) => {
     try {
-      User.sync();
+      await User.sync();
       const users = await User.findAll();
       if (!users || users.length === 0) {
         ctx.body = {

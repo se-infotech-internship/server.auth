@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { Context } from 'koa';
 import { User } from '../models/user.model';
-import { UserInterface } from '../models/user.model';
+// import { UserInterface } from '../models/user.model';
 import { Decoded } from '../middlewares';
 import { v4 as uuidv4 } from 'uuid';
 import * as dotenv from 'dotenv';
@@ -67,7 +67,7 @@ export const confirmEmail = async (ctx: Context) => {
       { where: { id: decoded.Id } },
     );
     ctx.status = 200;
-    ctx.body = { message: 'Email confirmation failed' };
+    ctx.body = { message: 'Email confirmed' };
   } catch (err) {
     console.log(err);
     ctx.status = err.statusCode || err.status || 400;
@@ -77,6 +77,33 @@ export const confirmEmail = async (ctx: Context) => {
     };
   }
 };
+
+// password reset
+export const passwordReset = async (ctx: Context) => {
+  try {
+    const id = ctx.params.id as string;
+    const password = ctx.request.body.password;
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(password, salt);
+  
+    await User.update(
+      { password: hashPassword },
+      { where: { id: id } },
+    );
+    ctx.status = 200;
+    ctx.body = { message: 'Password reset successful' };
+  }
+  catch(err) {
+    console.log(err);
+    ctx.status = err.statusCode || err.status || 400;
+    ctx.body = {
+      message: 'Password reset failed',
+      err: err,
+    };
+  }
+
+
+}
 
 // Login
 export const userLogIn = async (ctx: Context) => {
@@ -124,7 +151,7 @@ export const userLogIn = async (ctx: Context) => {
       expiresIn: tokenLife,
       });
       
-      user.isloggedIn = true;
+      // user.isloggedIn = true;
       await user.save();
       ctx.status = 200;
       ctx.body = {
@@ -169,6 +196,7 @@ export const rememberPassword = async (ctx: Context) => {
         message: 'Saved password check failed',
           err: err,
         };
+        return;
       }
       const id = result as string;
       const newRefreshToken = uuidv4();
@@ -198,12 +226,13 @@ export const rememberPassword = async (ctx: Context) => {
 // Logout
 export const userlogOut = async (ctx: Context) => {
   try {
-    const user = ctx.state.user as UserInterface;
-    user.isloggedIn = false;
-    await user.save();
+    // const user = ctx.state.user as UserInterface;
+    // user.isloggedIn = false;
+    // await user.save();
     ctx.status = 200;
     ctx.body = { message: 'Logged Out' };
-  } catch (err) {
+  } 
+  catch (err) {
     console.log(err);
     ctx.status = err.statusCode || err.status || 400;
     ctx.body = {
@@ -216,7 +245,15 @@ export const userlogOut = async (ctx: Context) => {
 // Add user details
 export const editUserDetails = async (ctx: Context) => {
   try {
-    const user = ctx.state.user as UserInterface;
+    const id = ctx.params.id as string;
+    const user = await User.findByPk(id);
+    if (!user) {
+      ctx.status = 400;
+      ctx.body = {
+        message: 'User not found',
+      };
+      return;
+    }
     user.name =
       'name' in ctx.request.body ? ctx.request.body.name : null;
     user.TZNumber =

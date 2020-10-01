@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-// import { Context, Next } from 'koa';
 
 //import controllers
 import {
@@ -8,6 +7,8 @@ import {
   userlogOut,
   editUserDetails,
   confirmEmail,
+  rememberPassword,
+  passwordReset
 } from '../controllers/user-controller';
 import { googleAuth, googleAuthCallback } from '../controllers/google-auth-controller'
 
@@ -26,9 +27,12 @@ router.post('/api/user/register/', registerNewUser);
 // confirm email
 router.get('/api/user/confirm/:token', confirmEmail);
 
+// password reset
+router.post('/api/user/password/:id', passwordReset);
+
 // logIn user
 router.post('/api/user/login/', userLogIn);
-router.get('/api/user/login/');
+router.get('/api/user/login/', rememberPassword);
 
 // logOut user
 router.get(
@@ -40,7 +44,7 @@ router.get(
 
 // Add user details
 router.post(
-  '/api/user/edit/',
+  '/api/user/edit/:id',
   hasToken,
   ensureAuthenticated,
   isBlocked,

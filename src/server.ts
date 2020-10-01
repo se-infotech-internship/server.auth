@@ -5,6 +5,7 @@ import * as dotenv from 'dotenv';
 import sequelize from './storage/sql'
 import userRouter from './routes/user';
 import adminRouter from './routes/admin';
+import messageRouter from './routes/message';
 
 dotenv.config();
 const app = new Koa();
@@ -17,6 +18,7 @@ app.use(json());
 
 app.use(userRouter.routes());
 app.use(adminRouter.routes());
+app.use(messageRouter.routes());
 
 // Error handler
 app.use(async (ctx, next) => {
