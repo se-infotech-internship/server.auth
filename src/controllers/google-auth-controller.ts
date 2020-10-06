@@ -1,5 +1,7 @@
 import { google } from 'googleapis';
 import { Context } from 'koa';
+import { User } from '../models/user.model'
+import { createNewToken } from '../controllers/user-controller'
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -15,9 +17,7 @@ async function getOAuthClient() {
 async function getGoogleAuthURL() {
   const OAuth2 = await getOAuthClient();
   const scopes = [
-    'https://www.googleapis.com/auth/userinfo.profile',
-    'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/plus.me'
+    'https://www.googleapis.com/auth/contacts.readonly profile email openid',
   ];
 
   return await OAuth2.generateAuthUrl({
@@ -48,40 +48,68 @@ export const googleAuth = async (ctx: Context) => {
 export const googleAuthCallback = async (ctx: Context) => {
   try {
     const OAuth2 = await getOAuthClient();
-    const code = ctx.request.query.code;
-  
-    await OAuth2.getToken(code, async (err, tokens) =>{ 
-      if(!err && tokens) {
-        OAuth2.setCredentials(tokens);
-        await google.plus('v1').people.get({
-          userId: 'me',
-          auth: OAuth2
-        },(err, res)=>{
-          if (err || !res) {
-            console.log(err);
-            ctx.status = 400;
-            ctx.body = {
-              message: 'Google sign in failed',
-              err: err,
-            };
-            return;
-          }
-          console.log(res.data);
-        })
-        ctx.status = 200;
-        ctx.body = {
-          message: 'Logged in with Google',
-        };
-      }
-      else {
-        console.log(err);
+    const code = ctx.request.query.code as string;
+    const tokenRes = await OAuth2.getToken(code);
+
+    if (!tokenRes) {
+        console.log('Google get token error');
         ctx.status = 400;
         ctx.body = {
           message: 'Google get token failed',
-          err: err,
         };
+        return;
+    }
+    await OAuth2.setCredentials(tokenRes.tokens);
+        
+    const service = await google.people({version: 'v1'}).people.get({
+      auth: OAuth2,
+      resourceName: 'people/me',
+      personFields: 'names,emailAddresses',
+    });
+    const id = service.data.names ? (
+      service.data.names[0].metadata ? (
+        service.data.names[0].metadata.source ? 
+        service.data.names[0].metadata.source.id
+        : null
+        ) : null
+      ) : null;
+    const email = service.data.emailAddresses ? service.data.emailAddresses[0].value : null;
+    const name = service.data.names ? service.data.names[0].displayName : null;
+    let token = '';
+    if (id && email && name) {
+      token = createNewToken(true, id);
+      const userExist = await User.findByPk(id);
+      console.log('userExist', userExist);
+      if (userExist) {
+        userExist.name = userExist.name !== name ? name : userExist.name;
+        userExist.email = userExist.email !== email ? email : userExist.email;
+        await userExist.save();
       }
-    })
+      else {
+        await User.create({
+          id: id,
+          email: email, 
+          isAdmin: false,
+          name: name,
+          rememberPassword: true
+        });
+      }
+
+    }
+    else {
+      console.log('Failed get Google profile data')
+      ctx.status = 400;
+      ctx.body = {
+        message: 'Failed get Google profile data',
+      };
+    }
+    
+    ctx.status = 200;
+    ctx.body = {
+      message: 'Logged in with Google',
+      token: token,
+      // res: service
+    };
   }
   catch(err) {
     console.log(err);

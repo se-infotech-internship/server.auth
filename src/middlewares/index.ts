@@ -2,6 +2,7 @@ import { Context, Next } from 'koa';
 import jwt from 'jsonwebtoken';
 import { User, UserInterface } from '../models/user.model';
 import * as dotenv from 'dotenv';
+import { client } from '../storage/redis'
 
 dotenv.config();
 
@@ -14,9 +15,9 @@ export interface Decoded {
 // access token check middleware
 export const hasToken = async (ctx: Context, next: Next) => {
   try {
-    const accessToken = ctx.request.headers.accessToken as string;
+    const token = ctx.request.headers.token as string;
     const tokenSecret = process.env.TOKEN_SECRET as string;
-    if (!accessToken) {
+    if (!token) {
       console.log('Token - Please, log in to view this resourse');
       ctx.response.status = 401;
       ctx.response.body = {
@@ -24,8 +25,28 @@ export const hasToken = async (ctx: Context, next: Next) => {
       };
       return;
     }
-    const decoded = (await jwt.verify(accessToken, tokenSecret)) as Decoded;
+    const isBlackList = await client.get(token);
+    if (isBlackList) {
+      console.log('Sorry, token expired');
+      ctx.response.status = 401;
+      ctx.response.body = {
+        message: 'Sorry, token expired',
+      };
+      return;
+    }
+    const decoded = (await jwt.verify(token, tokenSecret)) as Decoded;
     ctx.state.id = decoded.Id;
+
+    const user = await User.findByPk(decoded.Id);
+    if (!user) {
+      console.log('Auth - No user found');
+      ctx.response.status = 400;
+      ctx.response.body = {
+        message: 'Auth - No user found',
+      };
+      return;
+    }
+    ctx.state.user = user;
     return next();
   }
   catch(err) {
@@ -37,43 +58,6 @@ export const hasToken = async (ctx: Context, next: Next) => {
     };
   }
   
-};
-
-// auth check middleware
-export const ensureAuthenticated = async (
-  ctx: Context,
-  next: Next,
-) => {
-  try {
-    const id = ctx.state.id as string;
-    const user = await User.findByPk(id);
-    if (!user) {
-      console.log('Auth - No user found');
-      ctx.response.status = 400;
-      ctx.response.body = {
-        message: 'Auth - No user found',
-      };
-      return;
-    }
-    if (user.isloggedIn === false) {
-      console.log('Please, log in to view this resourse');
-      ctx.response.status = 401;
-      ctx.response.body = {
-        message: 'Please, log in to view this resourse',
-      };
-      return;
-    }
-    ctx.state.user = user;
-    return next();
-  }
-  catch(err) {
-    console.log(err);
-    ctx.status = err.statusCode || err.status || 400;
-    ctx.body = {
-      message: 'Auth check failed',
-      err: err,
-    };
-  }
 };
 
 // blocked user check middleware

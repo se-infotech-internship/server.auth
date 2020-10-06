@@ -15,7 +15,7 @@ export interface MessageInterface
   extends Sequelize.Model<MessageAttributes, MessageCreationAttributes>,
   MessageAttributes {}
 
-const Message = sequelize.define<MessageInterface>('user', {
+const Message = sequelize.define<MessageInterface>('message', {
   id: {
     type: Sequelize.STRING,
     allowNull: false,

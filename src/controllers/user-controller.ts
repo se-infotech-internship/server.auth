@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { Context } from 'koa';
 import { User } from '../models/user.model';
-// import { UserInterface } from '../models/user.model';
+import { UserInterface } from '../models/user.model';
 import { Decoded } from '../middlewares';
 import { v4 as uuidv4 } from 'uuid';
 import * as dotenv from 'dotenv';
@@ -12,13 +12,30 @@ dotenv.config();
 
 const tokenSecret = process.env.TOKEN_SECRET as string;
 const tokenLife = process.env.TOKEN_LIFE as string;
-const redisExp = process.env.REDIS_EXP as string;
+const tokenLifeLong = process.env.TOKEN_LIFE_LONG as string;
+
+function tokenExpiresIn (s: boolean) {
+  let exp = '';
+  if (s) {
+    exp = tokenLifeLong;
+  }
+  else exp = tokenLife;
+  return exp;
+}
+export function createNewToken (save: boolean, usId: string) {
+  let exp = tokenExpiresIn (save);
+  const newToken = jwt.sign({ Id: usId }, tokenSecret, {
+    expiresIn: exp,
+  });
+  return newToken;
+}
 
 // Register new user
 export const registerNewUser = async (ctx: Context) => {
   const { email, password } = ctx.request.body;
   const id = uuidv4();
   const isAdmin = !!ctx.request.body.isAdmin;
+  const rememberPassword = !!ctx.request.body.rememberPassword;
   try {
     // Check if User Exists in DB
     const emailExist = await User.findOne({
@@ -44,6 +61,7 @@ export const registerNewUser = async (ctx: Context) => {
       email: email,
       password: hashPassword,
       isAdmin: isAdmin,
+      rememberPassword: rememberPassword,
     });
     ctx.status = 201;
     ctx.body = newUser;
@@ -78,6 +96,27 @@ export const confirmEmail = async (ctx: Context) => {
   }
 };
 
+// Refresh token
+export const refreshToken = async (ctx: Context) => {
+  try {
+    const user = ctx.state.user as UserInterface;
+    const newToken = createNewToken(user.rememberPassword, user.id);
+    ctx.status = 201;
+    ctx.body = {
+      token: newToken,
+      message: 'New token created'
+    }
+  }
+  catch (err) {
+    console.log(err);
+    ctx.status = err.statusCode || err.status || 400;
+    ctx.body = {
+      message: 'Email confirmation failed',
+      err: err,
+    };
+  }
+}
+
 // password reset
 export const passwordReset = async (ctx: Context) => {
   try {
@@ -101,8 +140,6 @@ export const passwordReset = async (ctx: Context) => {
       err: err,
     };
   }
-
-
 }
 
 // Login
@@ -134,30 +171,22 @@ export const userLogIn = async (ctx: Context) => {
     //   };
     //   return;
     // }
+    const savedPassword = user.password as string;
     // Match password
     const isMatch = bcrypt.compareSync(
       ctx.request.body.password,
-      user.password,
+      savedPassword,
     );
     
     if (isMatch) {
-      let refreshToken = undefined;
-      if (user.rememberPassword) {
-        refreshToken = uuidv4();
-        await client.setex(refreshToken, +redisExp, user.id);
-      }
-      
-      const accessToken = jwt.sign({ Id: user.id }, tokenSecret, {
-      expiresIn: tokenLife,
-      });
+      const token = createNewToken(user.rememberPassword, user.id);
       
       // user.isloggedIn = true;
       await user.save();
       ctx.status = 200;
       ctx.body = {
         id: user.id,
-        accessToken: accessToken,
-        refreshToken: refreshToken,
+        token: token,
       };
     } else {
       console.log('Wrong credentials, try again...');
@@ -176,61 +205,28 @@ export const userLogIn = async (ctx: Context) => {
   }
 };
 
-// remember password middleware
-export const rememberPassword = async (ctx: Context) => {
+// Logout
+export const userlogOut = async (ctx: Context) => {
   try {
-    const refreshToken = ctx.request.headers.accessToken as string;
-    if (!refreshToken) {
-      console.log('Token - Please, log in to view this resourse');
-      ctx.response.status = 401;
-      ctx.response.body = {
-        message: 'Token - Please, log in to view this resourse',
-      };
-      return;
-    }
-    await client.get(refreshToken, async (err, result)=>{
-      if (err || !result) {
+    const token = ctx.request.headers.token as string;
+    const user = ctx.state.user as UserInterface;
+    const exp = tokenExpiresIn(user.rememberPassword);
+
+    await client.setex(token, +exp, user.id, (err, res) => {
+      if (err) {
         console.log(err);
         ctx.status = 400;
         ctx.body = {
-        message: 'Saved password check failed',
+          message: 'Redis save failed',
           err: err,
         };
         return;
       }
-      const id = result as string;
-      const newRefreshToken = uuidv4();
-      await client.setex(newRefreshToken, +redisExp, id);
-      const accessToken = jwt.sign({ Id: result }, tokenSecret, {
-        expiresIn: tokenLife,
-      });
-      ctx.status = 200
-      ctx.body = {
-        id: result,
-        accessToken: accessToken,
-        refreshToken: newRefreshToken,
-      };
-    })
-    
-  }
-  catch(err) {
-    console.log(err);
-    ctx.status = err.statusCode || err.status || 400;
-    ctx.body = {
-      message: 'Saved password check failed',
-      err: err,
-    };
-  }
-}
-
-// Logout
-export const userlogOut = async (ctx: Context) => {
-  try {
-    // const user = ctx.state.user as UserInterface;
+      ctx.status = 200;
+      ctx.body = { message: 'Logged Out' };
+    });
     // user.isloggedIn = false;
     // await user.save();
-    ctx.status = 200;
-    ctx.body = { message: 'Logged Out' };
   } 
   catch (err) {
     console.log(err);

@@ -9,7 +9,6 @@ import {
 
 // Middlewares
 import {
-  ensureAuthenticated,
   hasToken,
   isBlocked,
   isAdmin,
@@ -21,7 +20,6 @@ const router = new Router();
 router.get(
   '/api/admin/users',
   hasToken,
-  ensureAuthenticated,
   isBlocked,
   isAdmin,
   getAllUsers,
@@ -31,7 +29,6 @@ router.get(
 router.get(
   '/api/admin/block/:id',
   hasToken,
-  ensureAuthenticated,
   isBlocked,
   isAdmin,
   blockUser,
@@ -41,7 +38,6 @@ router.get(
 router.delete(
   '/api/admin/delete/:id',
   hasToken,
-  ensureAuthenticated,
   isBlocked,
   isAdmin,
   deleteUser,

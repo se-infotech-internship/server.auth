@@ -1,6 +1,7 @@
 import redis from 'redis';
 import * as dotenv from 'dotenv';
 
+// Uncoment next lines to use Redis with Redis Labs keys
 dotenv.config();
 
 const redisPort = process.env.REDIS_PORT as string;
@@ -15,3 +16,8 @@ export const client = redis.createClient({
   }).on('error', (err: Error)=>{
     console.error('ERR:REDIS:', err)
   })
+
+// Uncoment next lines to use Redis locally
+// export const client = redis.createClient({
+//   port: 6379,
+// });

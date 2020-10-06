@@ -5,8 +5,8 @@ interface UserAttributes {
   id: string;
   email: string;
   confirmed?: boolean;
-  password: string;
-  rememberPassword?: boolean;
+  password?: string;
+  rememberPassword: boolean;
   blocked?: boolean;
   isAdmin: boolean;
   isloggedIn?: boolean;
@@ -41,7 +41,7 @@ const User = sequelize.define<UserInterface>('user', {
   },
   password: {
     type: Sequelize.STRING,
-    allowNull: false,
+    defaultValue: '123456789',
   },
   rememberPassword: {
     type: Sequelize.BOOLEAN,

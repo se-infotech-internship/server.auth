@@ -7,14 +7,16 @@ import {
   userlogOut,
   editUserDetails,
   confirmEmail,
-  rememberPassword,
-  passwordReset
+  passwordReset,
+  refreshToken
 } from '../controllers/user-controller';
-import { googleAuth, googleAuthCallback } from '../controllers/google-auth-controller'
+import { 
+  googleAuth,
+  googleAuthCallback,
+ } from '../controllers/google-auth-controller'
 
 // Middlewares
 import {
-  ensureAuthenticated,
   hasToken,
   isBlocked,
 } from '../middlewares';
@@ -32,13 +34,19 @@ router.post('/api/user/password/:id', passwordReset);
 
 // logIn user
 router.post('/api/user/login/', userLogIn);
-router.get('/api/user/login/', rememberPassword);
+
+// refresh token
+router.get(
+  'api/user/token',
+  hasToken,
+  isBlocked,
+  refreshToken
+);
 
 // logOut user
 router.get(
   '/api/user/logout/',
   hasToken,
-  ensureAuthenticated,
   userlogOut,
 );
 
@@ -46,7 +54,6 @@ router.get(
 router.post(
   '/api/user/edit/:id',
   hasToken,
-  ensureAuthenticated,
   isBlocked,
   editUserDetails,
 );
