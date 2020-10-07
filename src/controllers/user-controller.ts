@@ -78,7 +78,7 @@ export const registerNewUser = async (ctx: Context) => {
 // confirm email
 export const confirmEmail = async (ctx: Context) => {
   try {
-    const token = ctx.params.id as string;
+    const token = ctx.params.token as string;
     const decoded = (await jwt.verify(token, tokenSecret)) as Decoded;
     await User.update(
       { confirmed: true },
@@ -121,7 +121,12 @@ export const refreshToken = async (ctx: Context) => {
 export const passwordReset = async (ctx: Context) => {
   try {
     const id = ctx.params.id as string;
-    const password = ctx.request.body.password;
+    const password = ctx.request.body.password as string;
+    if (!password) {
+      ctx.status = 400;
+      ctx.body = { message: 'Please, provide a password' };
+      return;
+    }
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(password, salt);
   
@@ -210,23 +215,11 @@ export const userlogOut = async (ctx: Context) => {
   try {
     const token = ctx.request.headers.token as string;
     const user = ctx.state.user as UserInterface;
-    const exp = tokenExpiresIn(user.rememberPassword);
+    // const exp = tokenExpiresIn(user.rememberPassword);
+    await client.setex(token, 691200, user.id);
 
-    await client.setex(token, +exp, user.id, (err, res) => {
-      if (err) {
-        console.log(err);
-        ctx.status = 400;
-        ctx.body = {
-          message: 'Redis save failed',
-          err: err,
-        };
-        return;
-      }
-      ctx.status = 200;
-      ctx.body = { message: 'Logged Out' };
-    });
-    // user.isloggedIn = false;
-    // await user.save();
+    ctx.status = 200;
+    ctx.body = { message: 'Logged Out' };
   } 
   catch (err) {
     console.log(err);
@@ -238,11 +231,10 @@ export const userlogOut = async (ctx: Context) => {
   }
 };
 
-// Add user details
+// user settings
 export const editUserDetails = async (ctx: Context) => {
   try {
-    const id = ctx.params.id as string;
-    const user = await User.findByPk(id);
+    const user = ctx.state.user as UserInterface;
     if (!user) {
       ctx.status = 400;
       ctx.body = {
@@ -250,20 +242,42 @@ export const editUserDetails = async (ctx: Context) => {
       };
       return;
     }
-    user.name =
-      'name' in ctx.request.body ? ctx.request.body.name : null;
-    user.TZNumber =
-      'TZNumber' in ctx.request.body
-        ? ctx.request.body.TZNumber
-        : null;
-    user.TZLicence =
-      'TZLicence' in ctx.request.body
-        ? ctx.request.body.TZLicence
-        : null;
-    user.driverLicence =
-      'driverLicence' in ctx.request.body
-        ? ctx.request.body.driverLicence
-        : null;
+    
+    if ('name' in ctx.request.body)
+    user.name = ctx.request.body.name;
+    if ('TZNumber' in ctx.request.body)
+    user.TZNumber = ctx.request.body.TZNumber;
+    if ('TZLicence' in ctx.request.body)
+    user.TZLicence = ctx.request.body.TZLicence;
+    if ('driverLicence' in ctx.request.body)
+    user.driverLicence = ctx.request.body.driverLicence;
+    if ('rememberPassword' in ctx.request.body)
+    user.rememberPassword = ctx.request.body.rememberPassword;
+    if ('distToCam' in ctx.request.body)
+    user.distToCam = ctx.request.body.distToCam; 
+    if ('pushNotifications' in ctx.request.body)
+    user.pushNotifications = ctx.request.body.pushNotifications;
+    if ('turnOnApp' in ctx.request.body)
+    user.turnOnApp = ctx.request.body.turnOnApp;
+    if ('emailNotifications' in ctx.request.body)
+    user.emailNotifications = ctx.request.body.emailNotifications;
+    if ('appPaymentReminder' in ctx.request.body)
+    user.appPaymentReminder = ctx.request.body.appPaymentReminder;
+    if ('maxSpeedNotifications' in ctx.request.body)
+    user.maxSpeedNotifications = ctx.request.body.maxSpeedNotifications;
+    if ('voiceNotifications' in ctx.request.body)
+    user.voiceNotifications = ctx.request.body.voiceNotifications;
+    if ('sound' in ctx.request.body)
+    user.sound = ctx.request.body.sound;
+    if ('finesAutoCheck' in ctx.request.body)
+    user.finesAutoCheck = ctx.request.body.finesAutoCheck;
+    if('finesPaymentAutoCheck' in ctx.request.body)
+    user.finesPaymentAutoCheck = ctx.request.body.finesPaymentAutoCheck;
+    if ('distanceToCam' in ctx.request.body)
+    user.distanceToCam = ctx.request.body.distanceToCam;
+    if ('camAutoFind' in ctx.request.body)
+    user.camAutoFind = ctx.request.body.camAutoFind;
+    
     await user.save();
     ctx.status = 200;
     ctx.body = { message: 'Updated' };

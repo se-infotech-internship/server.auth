@@ -18,7 +18,7 @@ const router = new Router();
 
 // get messages from user
 router.get(
-    '/api/message/:id', 
+    '/api/message', 
     hasToken, 
     // ensureAuthenticated, 
     isBlocked, 
@@ -27,7 +27,7 @@ router.get(
 
 // create messages
 router.post(
-    '/api/message/add',
+    '/api/message/add/:to',
     hasToken,
     // ensureAuthenticated,
     isBlocked, 

@@ -6,10 +6,10 @@ import { v4 as uuidv4 } from 'uuid';
 export const getUserMessages = async (ctx: Context) => {
     try {
         await Message.sync()
-        const id = ctx.params.id as string;
+        const id = ctx.state.id as string;
         const messages = await Message.findAll({
             where: {
-                id: id,
+                from: id,
             },
           });
       if (!messages || messages.length === 0) {
@@ -36,7 +36,15 @@ export const addMessage = async (ctx: Context) => {
     try {
         const from = ctx.state.id as string;
         const body = ctx.request.body.body as string;
-        const to = ctx.request.body.to as string;
+        const to = ctx.params.to as string;
+    
+        if (!body) {
+          ctx.status = 400;
+          ctx.body = {
+            message: 'Please, provide your message'
+          };
+          return;
+        }
         const newMessage = await Message.create({
             id: uuidv4(),
             body: body,

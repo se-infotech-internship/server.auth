@@ -24,7 +24,7 @@ import {
 const router = new Router();
 
 // register user
-router.post('/api/user/register/', registerNewUser);
+router.post('/api/user/register', registerNewUser);
 
 // confirm email
 router.get('/api/user/confirm/:token', confirmEmail);
@@ -33,11 +33,11 @@ router.get('/api/user/confirm/:token', confirmEmail);
 router.post('/api/user/password/:id', passwordReset);
 
 // logIn user
-router.post('/api/user/login/', userLogIn);
+router.post('/api/user/login', userLogIn);
 
 // refresh token
 router.get(
-  'api/user/token',
+  '/api/user/token',
   hasToken,
   isBlocked,
   refreshToken
@@ -45,14 +45,14 @@ router.get(
 
 // logOut user
 router.get(
-  '/api/user/logout/',
+  '/api/user/logout',
   hasToken,
   userlogOut,
 );
 
-// Add user details
+// User settings
 router.post(
-  '/api/user/edit/:id',
+  '/api/user/edit',
   hasToken,
   isBlocked,
   editUserDetails,
