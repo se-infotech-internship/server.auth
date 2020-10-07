@@ -6,13 +6,17 @@ import { UserInterface } from '../models/user.model';
 import { Decoded } from '../middlewares';
 import { v4 as uuidv4 } from 'uuid';
 import * as dotenv from 'dotenv';
-import { client } from '../storage/redis'
+import { client } from '../storage/redis';
+import fetch from 'node-fetch';
 
 dotenv.config();
 
+// Constants
 const tokenSecret = process.env.TOKEN_SECRET as string;
 const tokenLife = process.env.TOKEN_LIFE as string;
 const tokenLifeLong = process.env.TOKEN_LIFE_LONG as string;
+const notifURL = process.env.NOTIF_URL as string;
+const baseURL = process.env.BASE_URL as string;
 
 function tokenExpiresIn (s: boolean) {
   let exp = '';
@@ -53,7 +57,23 @@ export const registerNewUser = async (ctx: Context) => {
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(password, salt);
 
-    // send email tu verify user
+    // send email to verify user
+    const token = jwt.sign({ Id: id }, tokenSecret, {
+      expiresIn: '1 day',
+    });
+    const res = await fetch(`${notifURL}api/email/confirm/toUser`,{
+      method: 'post',
+      body: JSON.stringify({
+        email: email,
+        name: '',
+        link: `${baseURL}api/user/confirm/${token}`
+      })
+    });
+    if (!res) {
+      ctx.status = 400;
+      ctx.body = { message: 'Notification API error' };
+      return;
+    }
 
     // Save user to DB
     const newUser = await User.create({
