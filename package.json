@@ -1,7 +1,7 @@
 {
-  "name": "node-back-end",
+  "name": "server.auth",
   "version": "1.0.0",
-  "description": "...",
+  "description": "Back-End servise for user authentication, authorization and administration.",
   "main": "server.js",
   "scripts": {
     "dev": "nodemon ./dist/server.js",
@@ -10,6 +10,7 @@
   "author": "OLEG VOITIUK",
   "license": "ISC",
   "dependencies": {
+    "@koa/cors": "^3.1.0",
     "@types/async-redis": "^1.1.1",
     "@types/bcrypt": "^3.0.0",
     "@types/jsonwebtoken": "^8.5.0",
@@ -17,6 +18,7 @@
     "@types/koa-bodyparser": "^4.3.0",
     "@types/koa-json": "^2.0.18",
     "@types/koa-router": "^7.4.1",
+    "@types/koa__cors": "^3.0.2",
     "@types/node-fetch": "^2.5.7",
     "@types/uuid": "^8.3.0",
     "async-redis": "^1.1.7",

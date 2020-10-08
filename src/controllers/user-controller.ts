@@ -65,7 +65,7 @@ export const registerNewUser = async (ctx: Context) => {
       method: 'post',
       body: JSON.stringify({
         email: email,
-        name: '',
+        name: 'New User',
         link: `${baseURL}api/user/confirm/${token}`
       })
     });

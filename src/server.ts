@@ -6,13 +6,14 @@ import sequelize from './storage/sql'
 import userRouter from './routes/user';
 import adminRouter from './routes/admin';
 import messageRouter from './routes/message';
-// import cors from 'cors';
+import cors from '@koa/cors';
 
 dotenv.config();
 const app = new Koa();
 
 const port = process.env.PORT || 5001;
 
+app.use(cors());
 app.use(bodyParser());
 app.use(json());
 
