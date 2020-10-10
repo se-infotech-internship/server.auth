@@ -18,7 +18,7 @@ interface UserAttributes {
   driverLicence?: string;
   rememberPassword: boolean;
   blocked?: boolean;
-  isAdmin: boolean;
+  isAdmin?: boolean;
   distToCam?: Distances;
   pushNotifications?: boolean;
   turnOnApp?: boolean;

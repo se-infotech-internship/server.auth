@@ -36,9 +36,8 @@ export function createNewToken (save: boolean, usId: string) {
 
 // Register new user
 export const registerNewUser = async (ctx: Context) => {
-  const { email, password } = ctx.request.body;
+  const { email, password }: { email: string, password: string} = ctx.request.body;
   const id = uuidv4();
-  const isAdmin = !!ctx.request.body.isAdmin;
   const rememberPassword = !!ctx.request.body.rememberPassword;
   try {
     // Check if User Exists in DB
@@ -80,7 +79,6 @@ export const registerNewUser = async (ctx: Context) => {
       id: id,
       email: email,
       password: hashPassword,
-      isAdmin: isAdmin,
       rememberPassword: rememberPassword,
     });
     ctx.status = 201;
@@ -170,9 +168,16 @@ export const passwordReset = async (ctx: Context) => {
 // Login
 export const userLogIn = async (ctx: Context) => {
   try {
+    const { email, password }: { email: string, password: string} = ctx.request.body;
+    if (!email || !password || email.length === 0 || password.length === 0)
+    {
+      ctx.status = 401;
+      ctx.body = { message: 'Wrong credentials, try again' };
+      return;
+    }
     const user = await User.findOne({
       where: {
-        email: ctx.request.body.email,
+        email: email,
       },
     });
     if (!user) {
@@ -181,8 +186,7 @@ export const userLogIn = async (ctx: Context) => {
       return;
     }
     if (user.blocked) {
-      console.log('Sorry, user is blocked');
-      ctx.status = 400;
+      ctx.status = 403;
       ctx.body = {
         message: 'Sorry, user is blocked',
       };
@@ -190,7 +194,7 @@ export const userLogIn = async (ctx: Context) => {
     }
     // if (!user.confirmed) {
     //   console.log('Please, confirm your email to log in');
-    //   ctx.status = 400;
+    //   ctx.status = 401;
     //   ctx.body = {
     //     message: 'Please, confirm your email to log in',
     //   };
@@ -199,22 +203,19 @@ export const userLogIn = async (ctx: Context) => {
     const savedPassword = user.password as string;
     // Match password
     const isMatch = bcrypt.compareSync(
-      ctx.request.body.password,
+      password,
       savedPassword,
     );
     
     if (isMatch) {
       const token = createNewToken(user.rememberPassword, user.id);
-      
-      // user.isloggedIn = true;
-      await user.save();
+
       ctx.status = 200;
       ctx.body = {
         id: user.id,
         token: token,
       };
     } else {
-      console.log('Wrong credentials, try again...');
       ctx.status = 401;
       ctx.body = {
         message: 'Wrong credentials, try again...',

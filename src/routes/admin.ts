@@ -5,6 +5,7 @@ import {
   getAllUsers,
   blockUser,
   deleteUser,
+  adminLogIn,
 } from '../controllers/admin-controller';
 
 // Middlewares
@@ -24,6 +25,9 @@ router.get(
   isAdmin,
   getAllUsers,
 );
+
+// logIn admin
+router.post('/api/admin/login', adminLogIn);
 
 // Block/Unblock user
 router.get(
