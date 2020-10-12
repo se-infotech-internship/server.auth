@@ -6,6 +6,8 @@ import sequelize from './storage/sql'
 import userRouter from './routes/user';
 import adminRouter from './routes/admin';
 import messageRouter from './routes/message';
+import notifyRouter from './gateway-routes/notify-routes';
+import integrationRouter from './gateway-routes/integration-routes';
 import cors from '@koa/cors';
 
 dotenv.config();
@@ -20,6 +22,9 @@ app.use(json());
 app.use(userRouter.routes());
 app.use(adminRouter.routes());
 app.use(messageRouter.routes());
+//gateway routes
+app.use(notifyRouter.routes());
+app.use(integrationRouter.routes());
 
 // Error handler
 app.use(async (ctx, next) => {
