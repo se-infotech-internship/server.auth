@@ -37,6 +37,12 @@ export function createNewToken (save: boolean, usId: string) {
 // Register new user
 export const registerNewUser = async (ctx: Context) => {
   const { email, password }: { email: string, password: string} = ctx.request.body;
+  if (!email || !password || email.length === 0 || password.length === 0)
+  {
+    ctx.status = 401;
+    ctx.body = { message: 'Wrong credentials, try again' };
+    return;
+  }
   const id = uuidv4();
   const rememberPassword = !!ctx.request.body.rememberPassword;
   try {
@@ -66,7 +72,10 @@ export const registerNewUser = async (ctx: Context) => {
         email: email,
         name: 'New User',
         link: `${baseURL}api/user/confirm/${token}`
-      })
+      }),
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8'
+      },
     });
     if (!res) {
       ctx.status = 400;

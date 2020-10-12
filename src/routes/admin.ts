@@ -6,6 +6,8 @@ import {
   blockUser,
   deleteUser,
   adminLogIn,
+  autoGenUsers, // TEST
+  pagination, // TEST
 } from '../controllers/admin-controller';
 
 // Middlewares
@@ -17,12 +19,21 @@ import {
 
 const router = new Router();
 
+// TEST - Autogeneratu fake users
+router.get(
+  '/api/admin/autogenerate/:quantity',
+  autoGenUsers
+);
+
+// TEST - Pagination page
+router.get('/api/admin/pagination/', pagination);
+
 // get all users
 router.get(
-  '/api/admin/users',
-  hasToken,
-  isBlocked,
-  isAdmin,
+  '/api/admin/users/',
+  // hasToken,
+  // isBlocked,
+  // isAdmin,
   getAllUsers,
 );
 

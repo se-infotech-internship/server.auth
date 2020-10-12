@@ -10,6 +10,7 @@ enum Distances {
 interface UserAttributes {
   id: string;
   email: string;
+  phone?: string;
   password?: string;
   confirmed?: boolean;
   name?: string;
@@ -52,6 +53,7 @@ const User = sequelize.define<UserInterface>('user', {
     allowNull: false,
     unique: true,
   },
+  phone: Sequelize.STRING,
   password: {
     type: Sequelize.STRING,
     defaultValue: '123456789',

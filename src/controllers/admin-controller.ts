@@ -2,13 +2,99 @@ import { Context } from 'koa';
 import { User } from '../models/user.model';
 import { UserInterface } from '../models/user.model';
 import { createNewToken } from '../controllers/user-controller';
+import { v4 as uuidv4 } from 'uuid';
+import fetch from 'node-fetch';
 
+interface FindAndCountAllUsers {
+  rows: UserInterface[],
+  count: number,
+}
+
+// TEST - Autogeneratu fake users
+export const autoGenUsers = async (ctx: Context) => {
+  try {
+    const quantity = ctx.params.quantity as string;
+    for (let i = 0; i < +quantity; i++) {
+      await User.create({
+        id: uuidv4(),
+        email: `test${100 + i}@gmail.com`,
+        password: '123456',
+        rememberPassword: false
+      });
+    }
+    ctx.status = 200;
+    ctx.body = { message: `${quantity} users created` }
+  }
+  catch (err) {
+    console.log(err);
+    ctx.status = err.statusCode || err.status || 400;
+    ctx.body = {
+      message: 'Autogenerate failed',
+      err: err,
+    };
+  }
+}
+
+// TEST - Pagination page
+export const pagination = async (ctx: Context) => {
+  try {
+    // const token = ctx.request.headers.token as string;
+    const quantity = ctx.query.quantity ? +ctx.query.quantity : 10;
+    const page = ctx.query.page ? +ctx.query.page : 1;
+    const fetchRes = await fetch(
+      `http://localhost:5001/api/admin/users/?page=${page}&quantity=${quantity}`
+      );
+    const res = await fetchRes.json() as FindAndCountAllUsers;
+
+    const numberOfUsers = res.count;
+    const pages = Math.ceil(numberOfUsers / quantity);
+    let buttons = '';
+    for (let i = 1; i <= pages; i++) {
+      buttons += 
+      `<a href=
+      \"http://localhost:5001/api/admin/pagination/?page=${i}&quantity=${quantity}\">
+      <button>${i}</button>
+      </a>`;
+    }
+    const prevButton = page !== 1 ? 
+    `<a href=
+    \"http://localhost:5001/api/admin/pagination/?page=${page-1}&quantity=${quantity}\">
+    <button><<</button>
+    </a>` : '';
+    const nextButton = page !== pages ?
+    `<a href=
+    \"http://localhost:5001/api/admin/pagination/?page=${page+1}&quantity=${quantity}\">
+    <button>>></button>
+    </a>` : '';
+    const users = res.rows.map((user: UserInterface) =>`<li>${user.email}</li>`)
+    const body = `<h2>Pagination test</h2><div><p>${
+      users
+    }</p></div><div>${prevButton + buttons + nextButton}</div>`;
+    ctx.status = 200;
+    ctx.body = body;
+  }
+  catch (err) {
+    console.log(err);
+    ctx.status = err.statusCode || err.status || 400;
+    ctx.body = {
+      message: 'Pagination page failed',
+      err: err,
+    };
+  }
+}
 // Get all users
 export const getAllUsers = async (ctx: Context) => {
     try {
-      await User.sync();
-      const users = await User.findAll();
-      if (!users || users.length === 0) {
+      await User.sync(); 
+      const page = ctx.query.page ? +ctx.query.page : 1;
+      const quantity = ctx.query.quantity ? +ctx.query.quantity : 10;
+      // const phone = ctx.query.phone ? ctx.query.phone.trim().replace('-', '') : null; 
+      // const name = ctx.query.phone ? ctx.query.phone.trim().replace('-', '') : null;
+      // const TZNumber = ctx.query.phone ? ctx.query.phone.trim().replace('-', '') : null;
+      const users = await User.findAndCountAll({ 
+        offset: (page - 1) * quantity, limit: quantity 
+      });
+      if (!users || users.rows.length === 0) {
         ctx.body = {
           message: 'No users found',
         };
