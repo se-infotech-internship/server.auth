@@ -11,19 +11,12 @@ import {
 } from '../controllers/admin-controller';
 
 // Middlewares
-import {
-  hasToken,
-  isBlocked,
-  isAdmin,
-} from '../middlewares';
+import { hasToken, isBlocked, isAdmin } from '../middlewares';
 
 const router = new Router();
 
 // TEST - Autogeneratu fake users
-router.get(
-  '/api/admin/autogenerate/:quantity',
-  autoGenUsers
-);
+router.get('/api/admin/autogenerate/:quantity', autoGenUsers);
 
 // TEST - Pagination page
 router.get('/api/admin/pagination/', pagination);
@@ -31,9 +24,9 @@ router.get('/api/admin/pagination/', pagination);
 // get all users
 router.get(
   '/api/admin/users/',
-  // hasToken,
-  // isBlocked,
-  // isAdmin,
+  hasToken,
+  isBlocked,
+  isAdmin,
   getAllUsers,
 );
 

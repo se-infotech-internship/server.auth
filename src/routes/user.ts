@@ -8,18 +8,15 @@ import {
   editUserDetails,
   confirmEmail,
   passwordReset,
-  refreshToken
+  refreshToken,
 } from '../controllers/user-controller';
-import { 
+import {
   googleAuth,
   googleAuthCallback,
- } from '../controllers/google-auth-controller'
+} from '../controllers/google-auth-controller';
 
 // Middlewares
-import {
-  hasToken,
-  isBlocked,
-} from '../middlewares';
+import { hasToken, isBlocked } from '../middlewares';
 
 const router = new Router();
 
@@ -36,27 +33,13 @@ router.post('/api/user/password/:id', passwordReset);
 router.post('/api/user/login', userLogIn);
 
 // refresh token
-router.get(
-  '/api/user/token',
-  hasToken,
-  isBlocked,
-  refreshToken
-);
+router.get('/api/user/token', hasToken, isBlocked, refreshToken);
 
 // logOut user
-router.get(
-  '/api/user/logout',
-  hasToken,
-  userlogOut,
-);
+router.get('/api/user/logout', hasToken, userlogOut);
 
 // User settings
-router.post(
-  '/api/user/edit',
-  hasToken,
-  isBlocked,
-  editUserDetails,
-);
+router.post('/api/user/edit', hasToken, isBlocked, editUserDetails);
 
 // Google auth
 router.get('/api/user/login/google', googleAuth);

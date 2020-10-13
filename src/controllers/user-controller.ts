@@ -18,16 +18,15 @@ const tokenLifeLong = process.env.TOKEN_LIFE_LONG as string;
 const notifURL = process.env.NOTIF_URL as string;
 const baseURL = process.env.BASE_URL as string;
 
-function tokenExpiresIn (s: boolean) {
+function tokenExpiresIn(s: boolean) {
   let exp = '';
   if (s) {
     exp = tokenLifeLong;
-  }
-  else exp = tokenLife;
+  } else exp = tokenLife;
   return exp;
 }
-export function createNewToken (save: boolean, usId: string) {
-  let exp = tokenExpiresIn (save);
+export function createNewToken(save: boolean, usId: string) {
+  let exp = tokenExpiresIn(save);
   const newToken = jwt.sign({ Id: usId }, tokenSecret, {
     expiresIn: exp,
   });
@@ -36,9 +35,16 @@ export function createNewToken (save: boolean, usId: string) {
 
 // Register new user
 export const registerNewUser = async (ctx: Context) => {
-  const { email, password }: { email: string, password: string} = ctx.request.body;
-  if (!email || !password || email.length === 0 || password.length === 0)
-  {
+  const {
+    email,
+    password,
+  }: { email: string; password: string } = ctx.request.body;
+  if (
+    !email ||
+    !password ||
+    email.length === 0 ||
+    password.length === 0
+  ) {
     ctx.status = 401;
     ctx.body = { message: 'Wrong credentials, try again' };
     return;
@@ -66,15 +72,15 @@ export const registerNewUser = async (ctx: Context) => {
     const token = jwt.sign({ Id: id }, tokenSecret, {
       expiresIn: '1 day',
     });
-    const res = await fetch(`${notifURL}api/email/confirm/toUser`,{
+    const res = await fetch(`${notifURL}api/email/confirm/toUser`, {
       method: 'post',
       body: JSON.stringify({
         email: email,
         name: 'New User',
-        link: `${baseURL}api/user/confirm/${token}`
+        link: `${baseURL}api/user/confirm/${token}`,
       }),
       headers: {
-        'Content-Type': 'application/json;charset=utf-8'
+        'Content-Type': 'application/json;charset=utf-8',
       },
     });
     if (!res) {
@@ -86,7 +92,7 @@ export const registerNewUser = async (ctx: Context) => {
     // Save user to DB
     const newUser = await User.create({
       id: id,
-      email: email,
+      email: email.replace(/\s|-/g, '').toLowerCase(),
       password: hashPassword,
       rememberPassword: rememberPassword,
     });
@@ -131,10 +137,9 @@ export const refreshToken = async (ctx: Context) => {
     ctx.status = 201;
     ctx.body = {
       token: newToken,
-      message: 'New token created'
-    }
-  }
-  catch (err) {
+      message: 'New token created',
+    };
+  } catch (err) {
     console.log(err);
     ctx.status = err.statusCode || err.status || 400;
     ctx.body = {
@@ -142,7 +147,7 @@ export const refreshToken = async (ctx: Context) => {
       err: err,
     };
   }
-}
+};
 
 // password reset
 export const passwordReset = async (ctx: Context) => {
@@ -156,15 +161,14 @@ export const passwordReset = async (ctx: Context) => {
     }
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(password, salt);
-  
+
     await User.update(
       { password: hashPassword },
       { where: { id: id } },
     );
     ctx.status = 200;
     ctx.body = { message: 'Password reset successful' };
-  }
-  catch(err) {
+  } catch (err) {
     console.log(err);
     ctx.status = err.statusCode || err.status || 400;
     ctx.body = {
@@ -172,14 +176,21 @@ export const passwordReset = async (ctx: Context) => {
       err: err,
     };
   }
-}
+};
 
 // Login
 export const userLogIn = async (ctx: Context) => {
   try {
-    const { email, password }: { email: string, password: string} = ctx.request.body;
-    if (!email || !password || email.length === 0 || password.length === 0)
-    {
+    const {
+      email,
+      password,
+    }: { email: string; password: string } = ctx.request.body;
+    if (
+      !email ||
+      !password ||
+      email.length === 0 ||
+      password.length === 0
+    ) {
       ctx.status = 401;
       ctx.body = { message: 'Wrong credentials, try again' };
       return;
@@ -211,11 +222,8 @@ export const userLogIn = async (ctx: Context) => {
     // }
     const savedPassword = user.password as string;
     // Match password
-    const isMatch = bcrypt.compareSync(
-      password,
-      savedPassword,
-    );
-    
+    const isMatch = bcrypt.compareSync(password, savedPassword);
+
     if (isMatch) {
       const token = createNewToken(user.rememberPassword, user.id);
 
@@ -250,8 +258,7 @@ export const userlogOut = async (ctx: Context) => {
 
     ctx.status = 200;
     ctx.body = { message: 'Logged Out' };
-  } 
-  catch (err) {
+  } catch (err) {
     console.log(err);
     ctx.status = err.statusCode || err.status || 400;
     ctx.body = {
@@ -272,42 +279,61 @@ export const editUserDetails = async (ctx: Context) => {
       };
       return;
     }
-    
+
     if ('name' in ctx.request.body)
-    user.name = ctx.request.body.name;
+      user.name = ctx.request.body.name
+        .replace(/\s|-/g, '')
+        .toLowerCase();
+    if ('phone' in ctx.request.body)
+      user.phone = ctx.request.body.phone.replace(/\s|-/g, '');
     if ('TZNumber' in ctx.request.body)
-    user.TZNumber = ctx.request.body.TZNumber;
+      user.TZNumber = ctx.request.body.TZNumber.replace(
+        /\s|-/g,
+        '',
+      ).toLowerCase();
     if ('TZLicence' in ctx.request.body)
-    user.TZLicence = ctx.request.body.TZLicence;
+      user.TZLicence = ctx.request.body.TZLicence.replace(
+        /\s|-/g,
+        '',
+      ).toLowerCase();
     if ('driverLicence' in ctx.request.body)
-    user.driverLicence = ctx.request.body.driverLicence;
+      user.driverLicence = ctx.request.body.driverLicence
+        .replace(/\s|-/g, '')
+        .toLowerCase();
+    if ('TZVIN' in ctx.request.body)
+      user.TZVIN = ctx.request.body.TZVIN.replace(
+        /\s|-/g,
+        '',
+      ).toLowerCase();
     if ('rememberPassword' in ctx.request.body)
-    user.rememberPassword = ctx.request.body.rememberPassword;
+      user.rememberPassword = ctx.request.body.rememberPassword;
     if ('distToCam' in ctx.request.body)
-    user.distToCam = ctx.request.body.distToCam; 
+      user.distToCam = ctx.request.body.distToCam;
     if ('pushNotifications' in ctx.request.body)
-    user.pushNotifications = ctx.request.body.pushNotifications;
+      user.pushNotifications = ctx.request.body.pushNotifications;
     if ('turnOnApp' in ctx.request.body)
-    user.turnOnApp = ctx.request.body.turnOnApp;
+      user.turnOnApp = ctx.request.body.turnOnApp;
     if ('emailNotifications' in ctx.request.body)
-    user.emailNotifications = ctx.request.body.emailNotifications;
+      user.emailNotifications = ctx.request.body.emailNotifications;
     if ('appPaymentReminder' in ctx.request.body)
-    user.appPaymentReminder = ctx.request.body.appPaymentReminder;
+      user.appPaymentReminder = ctx.request.body.appPaymentReminder;
     if ('maxSpeedNotifications' in ctx.request.body)
-    user.maxSpeedNotifications = ctx.request.body.maxSpeedNotifications;
+      user.maxSpeedNotifications =
+        ctx.request.body.maxSpeedNotifications;
     if ('voiceNotifications' in ctx.request.body)
-    user.voiceNotifications = ctx.request.body.voiceNotifications;
+      user.voiceNotifications = ctx.request.body.voiceNotifications;
     if ('sound' in ctx.request.body)
-    user.sound = ctx.request.body.sound;
+      user.sound = ctx.request.body.sound;
     if ('finesAutoCheck' in ctx.request.body)
-    user.finesAutoCheck = ctx.request.body.finesAutoCheck;
-    if('finesPaymentAutoCheck' in ctx.request.body)
-    user.finesPaymentAutoCheck = ctx.request.body.finesPaymentAutoCheck;
+      user.finesAutoCheck = ctx.request.body.finesAutoCheck;
+    if ('finesPaymentAutoCheck' in ctx.request.body)
+      user.finesPaymentAutoCheck =
+        ctx.request.body.finesPaymentAutoCheck;
     if ('distanceToCam' in ctx.request.body)
-    user.distanceToCam = ctx.request.body.distanceToCam;
+      user.distanceToCam = ctx.request.body.distanceToCam;
     if ('camAutoFind' in ctx.request.body)
-    user.camAutoFind = ctx.request.body.camAutoFind;
-    
+      user.camAutoFind = ctx.request.body.camAutoFind;
+
     await user.save();
     ctx.status = 200;
     ctx.body = { message: 'Updated' };

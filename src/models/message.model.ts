@@ -12,8 +12,11 @@ interface MessageCreationAttributes
   extends Sequelize.Optional<MessageAttributes, 'id'> {}
 
 export interface MessageInterface
-  extends Sequelize.Model<MessageAttributes, MessageCreationAttributes>,
-  MessageAttributes {}
+  extends Sequelize.Model<
+      MessageAttributes,
+      MessageCreationAttributes
+    >,
+    MessageAttributes {}
 
 const Message = sequelize.define<MessageInterface>('message', {
   id: {
@@ -23,7 +26,7 @@ const Message = sequelize.define<MessageInterface>('message', {
   },
   body: Sequelize.STRING,
   to: Sequelize.STRING,
-  from: Sequelize.STRING
+  from: Sequelize.STRING,
 });
 
 export { Message };

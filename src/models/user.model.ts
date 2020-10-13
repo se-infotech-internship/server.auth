@@ -14,8 +14,11 @@ interface UserAttributes {
   password?: string;
   confirmed?: boolean;
   name?: string;
+  secondName?: string;
+  middleName?: string;
   TZNumber?: string;
   TZLicence?: string;
+  TZVIN?: string;
   driverLicence?: string;
   rememberPassword: boolean;
   blocked?: boolean;
@@ -59,9 +62,12 @@ const User = sequelize.define<UserInterface>('user', {
     defaultValue: '123456789',
   },
   name: Sequelize.STRING,
+  secondName: Sequelize.STRING,
+  middleName: Sequelize.STRING,
   TZNumber: Sequelize.STRING,
   TZLicence: Sequelize.STRING,
   driverLicence: Sequelize.STRING,
+  TZVIN: Sequelize.STRING,
   // System settings
   confirmed: {
     type: Sequelize.BOOLEAN,
@@ -146,7 +152,7 @@ const User = sequelize.define<UserInterface>('user', {
     type: Sequelize.BOOLEAN,
     allowNull: false,
     defaultValue: true,
-  }
+  },
 });
 
 export { User };

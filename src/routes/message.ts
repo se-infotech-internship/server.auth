@@ -1,47 +1,47 @@
 import Router from 'koa-router';
 
 import {
-    getUserMessages,
-    addMessage,
-    deleteMessage
+  getUserMessages,
+  addMessage,
+  deleteMessage,
 } from '../controllers/message-controller';
 
 // middlewares
 import {
-    hasToken,
-    // ensureAuthenticated,
-    isBlocked,
-    isAdmin
-} from '../middlewares'
+  hasToken,
+  // ensureAuthenticated,
+  isBlocked,
+  isAdmin,
+} from '../middlewares';
 
 const router = new Router();
 
 // get messages from user
 router.get(
-    '/api/message', 
-    hasToken, 
-    // ensureAuthenticated, 
-    isBlocked, 
-    getUserMessages
-    );
+  '/api/message',
+  hasToken,
+  // ensureAuthenticated,
+  isBlocked,
+  getUserMessages,
+);
 
 // create messages
 router.post(
-    '/api/message/add/:to',
-    hasToken,
-    // ensureAuthenticated,
-    isBlocked, 
-    addMessage
-    );
+  '/api/message/add/:to',
+  hasToken,
+  // ensureAuthenticated,
+  isBlocked,
+  addMessage,
+);
 
 // delete messages
 router.delete(
-    '/api/message/:id',
-    hasToken,
-    // ensureAuthenticated,
-    isBlocked,
-    isAdmin,
-    deleteMessage
-    );
+  '/api/message/:id',
+  hasToken,
+  // ensureAuthenticated,
+  isBlocked,
+  isAdmin,
+  deleteMessage,
+);
 
 export = router;

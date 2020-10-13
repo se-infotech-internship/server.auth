@@ -2,7 +2,7 @@ import { Context, Next } from 'koa';
 import jwt from 'jsonwebtoken';
 import { User, UserInterface } from '../models/user.model';
 import * as dotenv from 'dotenv';
-import { client } from '../storage/redis'
+import { client } from '../storage/redis';
 
 dotenv.config();
 
@@ -48,8 +48,7 @@ export const hasToken = async (ctx: Context, next: Next) => {
     }
     ctx.state.user = user;
     return next();
-  }
-  catch(err) {
+  } catch (err) {
     console.log(err);
     ctx.status = err.statusCode || err.status || 400;
     ctx.body = {
@@ -57,7 +56,6 @@ export const hasToken = async (ctx: Context, next: Next) => {
       err: err,
     };
   }
-  
 };
 
 // blocked user check middleware
@@ -73,8 +71,7 @@ export const isBlocked = async (ctx: Context, next: Next) => {
       return;
     }
     return next();
-  }
-  catch(err) {
+  } catch (err) {
     console.log(err);
     ctx.status = err.statusCode || err.status || 400;
     ctx.body = {
@@ -82,7 +79,6 @@ export const isBlocked = async (ctx: Context, next: Next) => {
       err: err,
     };
   }
-  
 };
 
 // admin permission check middleware
@@ -98,8 +94,7 @@ export const isAdmin = async (ctx: Context, next: Next) => {
       return;
     }
     return next();
-  }
-  catch(err) {
+  } catch (err) {
     console.log(err);
     ctx.status = err.statusCode || err.status || 400;
     ctx.body = {
@@ -107,6 +102,4 @@ export const isAdmin = async (ctx: Context, next: Next) => {
       err: err,
     };
   }
-
 };
-

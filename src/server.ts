@@ -2,7 +2,7 @@ import Koa from 'koa';
 import json from 'koa-json';
 import bodyParser from 'koa-bodyparser';
 import * as dotenv from 'dotenv';
-import sequelize from './storage/sql'
+import sequelize from './storage/sql';
 import userRouter from './routes/user';
 import adminRouter from './routes/admin';
 import messageRouter from './routes/message';
