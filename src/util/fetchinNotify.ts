@@ -20,12 +20,12 @@ const main = async (user: any, link: string) => {
             const ms = 300000000 // 5 min in miliseconds
             if (new Date().getTime() - date.getTime() < ms) {
                 console.log('should to be send')
-                await Fetching('POST', `${serverUrl}/api/email/new-fee/toUser/`, JSON.stringify({
+                await Fetching('POST', `${serverUrl}api/email/new-fee/toUser/`, JSON.stringify({
                     email: user.email,
                     name: user.name,
                     link: 'google.com'
                 }))
-                await Fetching('POST', `${serverUrl}/api/push/new-fee/toUser/`, JSON.stringify({
+                await Fetching('POST', `${serverUrl}api/push/new-fee/toUser/`, JSON.stringify({
                     registrationToken: 'user.registrationToken'
                 }));
 
