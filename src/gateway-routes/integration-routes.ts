@@ -12,6 +12,7 @@ import {
 const router = new Router();
 
 const serverUrl = process.env.INTERGATION_URL || 'http://localhost:4000';
+
 // getting all fees
 router.get('/fees/all-fees/',
     hasToken,
@@ -23,6 +24,7 @@ router.get('/fees/all-fees/',
         console.log(path, ' ', method);
         const result: any = await Fetching(method, path);
         const data  = await result.json();
+
         if(!result){
             ctx.body = {
                 err: "Error"
@@ -34,7 +36,8 @@ router.get('/fees/all-fees/',
         }
     }
 );
-// getting fees by userId?
+
+// getting fees by userId???????????????
 router.get('/fees/get-fee/by/userId/:id',
    /*  hasToken,
     isBlocked, */
@@ -54,10 +57,11 @@ router.get('/fees/get-fee/by/userId/:id',
         }
     }
 );
+
 // getting fees by number of fee
 router.get('/fees/get-fee/by/numberOf/:numberOf',
-   /*  hasToken,
-    isBlocked, */
+    hasToken,
+    isBlocked,
     async (ctx,err) => {
         const path: string = serverUrl + ctx.request.path;
         const method: string = ctx.request.method;
@@ -77,8 +81,8 @@ router.get('/fees/get-fee/by/numberOf/:numberOf',
 );
 // getting fees by serial 
 router.get('/fees/get-fee/by/serial/:serial',
-   /*  hasToken,
-    isBlocked, */
+    hasToken,
+    isBlocked,
     async (ctx,err) => {
         const path: string = serverUrl + ctx.request.path;
         const method: string = ctx.request.method;
@@ -98,8 +102,8 @@ router.get('/fees/get-fee/by/serial/:serial',
 );
 // getting fees by tz number 
 router.get('/fees/get-fee/by/tzNumber/:tzNumber',
-   /*  hasToken,
-    isBlocked, */
+    hasToken,
+    isBlocked,
     async (ctx,err) => {
         const path: string = serverUrl + ctx.request.path;
         const method: string = ctx.request.method;
