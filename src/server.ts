@@ -6,9 +6,12 @@ import sequelize from './storage/sql'
 import userRouter from './routes/user';
 import adminRouter from './routes/admin';
 import messageRouter from './routes/message';
-import notifyRouter from './gateway-routes/notify-routes';
 import integrationRouter from './gateway-routes/integration-routes';
 import cors from '@koa/cors';
+
+import { CronJob } from 'cron';
+import sendNotification from './util/sendNotification';
+
 
 dotenv.config();
 const app = new Koa();
@@ -23,7 +26,6 @@ app.use(userRouter.routes());
 app.use(adminRouter.routes());
 app.use(messageRouter.routes());
 //gateway routes
-app.use(notifyRouter.routes());
 app.use(integrationRouter.routes());
 
 // Error handler
@@ -41,8 +43,19 @@ sequelize
   .sync()
   .then(() => {
     console.log('Database connected');
-    app.listen(port, () =>
-      console.log(`Server is running on port ${port}`),
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`)
+
+
+      // running every 5 minutes
+      const job = new CronJob('0 */1 * * * *', async () => {
+        console.log('success from cron')
+        await sendNotification();   // taking users with filters
+        // checking for updates in last 5 min and send notification   
+      }, null, true, 'Europe/Stockholm');
+      job.start();
+      
+    }
     );
   })
   .catch((err) => console.log(err));
