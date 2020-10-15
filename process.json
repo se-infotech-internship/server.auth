@@ -4,18 +4,21 @@
       "name": "auth+gateway",
       "exec_mode": "cluster",
       "instances": 2,
-      "watch": true
+      "watch": false,
+      "time": true
     },
     {
       "script": "../server.notify/dist/app.js",
       "name": "notify-service",
       "exec_mode": "fork",
-      "watch": true
+      "watch": false,
+      "time": true
     },
     {
       "script": "../server.bus-intergration/dist/app.js",
       "name": "integration-service",
       "exec_mode": "fork",
-      "watch": true
+      "watch": false,
+      "time": true
     }
   ]
