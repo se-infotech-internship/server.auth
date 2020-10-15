@@ -8,10 +8,12 @@ const main = async () => {
     let users = await User.findAll(
         {
             where: {
-                TZNumber: { [Op.not]: null }
+                [Op.or]: [
+                    { TZNumber: { [Op.not]: null } },
+                    { TZLicence: { [Op.not]: null } },
+                    { driverLicence: { [Op.not]: null } }
+                ]
             }
-
-
         });
 
     console.log(JSON.stringify(users));
