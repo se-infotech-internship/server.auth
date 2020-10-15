@@ -23,6 +23,7 @@ const main = async (user: any, link: string) => {
                         link: 'google.com'
                     })
                 )
+
                 await Fetching('POST', `${serverUrl}api/push/new-fee/toUser/`, JSON.stringify({
                     registrationToken: 'user.registrationToken'
                 }));
