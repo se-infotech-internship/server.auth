@@ -46,9 +46,8 @@ sequelize
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`)
 
-
       // running every 5 minutes
-      const job = new CronJob('0 */1 * * * *', async () => {
+      const job = new CronJob('0 */5 * * * *', async () => {
         console.log('success from cron')
         await sendNotification();   // taking users with filters
         // checking for updates in last 5 min and send notification   
