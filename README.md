@@ -1,14 +1,17 @@
-## INFOTECH - Smart Radar Auth Servise API
+## INFOTECH - Smart Radar Auth Service API & Gateway Service API
 
 Back-End servise for user authentication, authorization and administration.
 
 ---
 ## Requirements
 
+- TypeScript
 - Node.js/KOA
 - MariaDB local instanse
 - Redis
 - Google Peoples API
+- Notification Service API
+- Intergration Service API
 - .env file vith keys  
 
 ---
