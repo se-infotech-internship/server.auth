@@ -8,9 +8,6 @@ import adminRouter from './routes/admin';
 import messageRouter from './routes/message';
 import integrationRouter from './gateway-routes/integration-routes';
 import cors from '@koa/cors';
-import serve from 'koa-static';
-import send from 'koa-send';
-import path from 'path';
 
 import { CronJob } from 'cron';
 import sendNotification from './util/sendNotification';
@@ -24,20 +21,11 @@ app.use(cors());
 app.use(bodyParser());
 app.use(json());
 
-// Static folder
-app.use(serve(path.join(__dirname, 'client', 'build')));
-
 app.use(userRouter.routes());
 app.use(adminRouter.routes());
 app.use(messageRouter.routes());
 //gateway routes
 app.use(integrationRouter.routes());
-
-app.use(async (ctx: Context) => {
-  // res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
-  if ('/*' == ctx.path) return (ctx.body = 'Try GET /package.json');
-  await send(ctx, ctx.path);
-});
 
 // Error handler
 app.use(async (ctx, next) => {

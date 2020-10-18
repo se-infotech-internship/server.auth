@@ -253,7 +253,6 @@ export const userlogOut = async (ctx: Context) => {
   try {
     const token = ctx.request.headers.token as string;
     const user = ctx.state.user as UserInterface;
-    // const exp = tokenExpiresIn(user.rememberPassword);
     await client.setex(token, 691200, user.id);
 
     ctx.status = 200;

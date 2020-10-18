@@ -36,7 +36,6 @@ async function getGoogleAuthURL() {
 export const googleAuth = async (ctx: Context) => {
   try {
     const url = await getGoogleAuthURL();
-    // console.log(url);
     ctx.body = `<h1>Authentication using google oAuth</h1><a href=${url}>Login</a>`;
   } catch (err) {
     console.log(err);
@@ -117,7 +116,6 @@ export const googleAuthCallback = async (ctx: Context) => {
     ctx.body = {
       message: 'Logged in with Google',
       token: token,
-      // res: service
     };
   } catch (err) {
     console.log(err);

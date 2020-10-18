@@ -5,8 +5,7 @@ dotenv.config();
 
 const passwordDb = process.env.DB_PASSWORD as string;
 const sequelize = new Sequelize('LocalDB', 'root', passwordDb, {
-  dialect: 'mysql',
-  // dialect: 'mariadb',
+  dialect: 'mariadb',
   host: 'localhost',
   port: 3306,
 });

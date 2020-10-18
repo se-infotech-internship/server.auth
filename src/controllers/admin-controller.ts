@@ -43,7 +43,6 @@ export const autoGenUsers = async (ctx: Context) => {
 // TEST - Pagination page
 export const pagination = async (ctx: Context) => {
   try {
-    // const token = ctx.request.headers.token as string;
     const quantity = ctx.query.quantity ? +ctx.query.quantity : 10;
     const page = ctx.query.page ? +ctx.query.page : 1;
     const fetchRes = await fetch(
@@ -95,6 +94,7 @@ export const pagination = async (ctx: Context) => {
     };
   }
 };
+
 // Get all users
 export const getAllUsers = async (ctx: Context) => {
   try {

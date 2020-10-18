@@ -9,7 +9,6 @@ import {
 // middlewares
 import {
   hasToken,
-  // ensureAuthenticated,
   isBlocked,
   isAdmin,
 } from '../middlewares';
@@ -20,7 +19,6 @@ const router = new Router();
 router.get(
   '/api/message',
   hasToken,
-  // ensureAuthenticated,
   isBlocked,
   getUserMessages,
 );
@@ -29,7 +27,6 @@ router.get(
 router.post(
   '/api/message/add/:to',
   hasToken,
-  // ensureAuthenticated,
   isBlocked,
   addMessage,
 );
@@ -38,7 +35,6 @@ router.post(
 router.delete(
   '/api/message/:id',
   hasToken,
-  // ensureAuthenticated,
   isBlocked,
   isAdmin,
   deleteMessage,
