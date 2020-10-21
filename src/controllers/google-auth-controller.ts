@@ -10,7 +10,7 @@ dotenv.config();
 const googleId = process.env.GOOGLE_CLIENT_ID as string;
 const googleSecret = process.env.GOOGLE_CLIENT_SECRET as string;
 const redirectURL =
-  'http://localhost:5001/api/user/login/google/callback';
+  'http://195.230.156.40:5001/api/user/login/google/callback';
 
 async function getOAuthClient() {
   return await new google.auth.OAuth2(

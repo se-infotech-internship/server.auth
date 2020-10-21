@@ -1,4 +1,4 @@
-import Koa, { Context } from 'koa';
+import Koa from 'koa';
 import json from 'koa-json';
 import bodyParser from 'koa-bodyparser';
 import * as dotenv from 'dotenv';

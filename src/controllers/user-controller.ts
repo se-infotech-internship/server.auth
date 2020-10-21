@@ -15,8 +15,6 @@ dotenv.config();
 const tokenSecret = process.env.TOKEN_SECRET as string;
 const tokenLife = process.env.TOKEN_LIFE as string;
 const tokenLifeLong = process.env.TOKEN_LIFE_LONG as string;
-const notifURL = process.env.NOTIF_URL as string;
-const baseURL = process.env.BASE_URL as string;
 
 function tokenExpiresIn(s: boolean) {
   let exp = '';
@@ -72,12 +70,12 @@ export const registerNewUser = async (ctx: Context) => {
     const token = jwt.sign({ Id: id }, tokenSecret, {
       expiresIn: '1 day',
     });
-    const res = await fetch(`${notifURL}api/email/confirm/toUser`, {
+    const res = await fetch(`http://localhost:3000/api/email/confirm/toUser`, {
       method: 'post',
       body: JSON.stringify({
         email: email,
         name: 'New User',
-        link: `${baseURL}api/user/confirm/${token}`,
+        link: `http://195.230.156.40:5001/api/user/confirm/${token}`,
       }),
       headers: {
         'Content-Type': 'application/json;charset=utf-8',
