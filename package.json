@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon ./dist/server.js",
     "str": "node ./dist/server.js",
-    "start": "npx nodemon --watch ./ --exec ts-node ./src/server.ts"
+    "start": "npx nodemon --watch ./ --exec 'ts-node' ./src/server.ts"
   },
   "author": "OLEG VOITIUK",
   "license": "ISC",
